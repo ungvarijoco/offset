@@ -1853,8 +1853,9 @@ Szavak: (...), (...), (...), (...), (...), (...).`
           success: function(response){
             console.log(response);
               //let buf = $('#poetry').html();
-              //$('#poetry').html(response.choices[0].message.content.split('\n').join('<br>')+'<br>------<br>'+buf);
-              //state='show';
+              $('#poem').text(response.vers);
+               //CALL SPLIT TYPE HERE + STATUS CHANGE
+            //state='show';
               //$('#emo').attr('src','res/pointing.gif');
             },
             error: function(response) {console.error(response);}
