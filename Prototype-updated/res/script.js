@@ -272,6 +272,7 @@ $(document).ready(function () {
 
             const source = audioCtx.createMediaStreamSource(audioStream);
             source.connect(analyser);
+            startEqDraw();
         } catch (err) {
             console.warn("EQ Microphone error:", err);
         }
@@ -303,7 +304,7 @@ $(document).ready(function () {
         if (eqTargetSens === 0 && eqCurrentSens < 0.01) {
             eqCurrentSens = 0;
             if (eqCtx) eqCtx.clearRect(0, 0, eqCanvas.width, eqCanvas.height);
-            eqRafId = null;
+            eqRafId = requestAnimationFrame(drawEqualizer);
             return;
         }
 
@@ -817,10 +818,14 @@ $(document).ready(function () {
         if (newPhase === 'hidden') {
             StateManager.reset();
             StateManager.hideBrackets();
+            $('#logo').removeClass('header-element-active');
+            setTimeout(function() { $('#current-volume').removeClass('header-element-active'); }, 100);
         } else if (newPhase === 'spaced') {
             StateManager.showBrackets(function() {
                 StateManager.startListening();
             });
+            setTimeout(function() { $('#logo').addClass('header-element-active'); }, 100);
+            setTimeout(function() { $('#current-volume').addClass('header-element-active'); }, 250);
         } else if (newPhase === 'physics') {
             // Remove stuck puzzle states
             $('.puzzlePhase').each(function() { StateManager.hide($(this)); });

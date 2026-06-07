@@ -395,8 +395,21 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 40px;
+    height: 40px;
+    aspect-ratio: 1/1;
     border-radius: 3px;
+    transform: translateY(-50px);
+    opacity: 0;
+    transition: var(--speed) var(--ease);
+}
+
+#logo img {
+    height: 100%;
+}
+
+.header-element-active {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
 }
 
 #current-volume {
@@ -407,6 +420,14 @@ body {
     font-family: "PP Supply Mono";
     font-size: 16px;
     color: var(--white);
+    transform: translateY(-50px);
+    opacity: 0;
+    transition: var(--speed) var(--ease);
+}
+
+.header-element-active {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 #noise-overlay {
