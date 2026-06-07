@@ -151,13 +151,13 @@ $(document).ready(function () {
     ];
 
     const easterEggs = {
-        "banyek": ");",
-        "bau":    ":o",
-        "baú":    ":o",
-        "balls":  ":3",
-        "ballz":  ":3",
-        "bebúr":  ":+",
-        "bebur":  ":+"
+        "banyek": "🤡",
+        "bau":    "🫠",
+        "baú":    "🫠",
+        "balls":  "🖤",
+        "ballz":  "🖤",
+        "bebúr":  "🥴",
+        "bebur":  "🥴"
     };
 
     const cuteWords = [
