@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-    /*--Global States------------------------*/
+    /*--Automation Config---------------------------*/
     
     let currentPhase = 'hidden';
 
@@ -13,6 +13,10 @@ $(document).ready(function () {
         hiddenToSpaced: 500,
         minStateDuration: 500,
         countdownDelay: 2000
+    };
+
+    const appConfig = {
+        enableMic: true
     };
 
     /*--Split Type---------------------------*/
@@ -68,10 +72,6 @@ $(document).ready(function () {
         inQuart:  (t) => t * t * t * t
     };
 
-    const appConfig = {
-        enableMic: true
-    };
-
     const VOLUME_THRESHOLD = 150;
     const GATE_HOLD_TIME = 2000;
     const VOLUME_DEBUG = true;
@@ -80,7 +80,7 @@ $(document).ready(function () {
 
     /*--EQ Config----------------------------*/
 
-const eqConfig = {
+    const eqConfig = {
         volumeSensitivity: 4, 
         idleAmplitude: 100,
         baseFlowSpeed: 0.2,
