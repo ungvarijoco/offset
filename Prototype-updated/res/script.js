@@ -1,12 +1,12 @@
 $(document).ready(function () {
 
     /*--Automation Config---------------------------*/
-    
+
     let currentPhase = 'hidden';
 
     const autoConfig = {
-        enabled: true,
-        spacedToPuzzle: 3000,   
+        enabled: false,
+        spacedToPuzzle: 3000,
         puzzleToPhysics: 10000,
         physicsToEmotion: 500,
         emotionToHidden: 30000,
@@ -33,12 +33,12 @@ $(document).ready(function () {
     /*--Speech Config------------------------*/
 
     const speechAngles = {
-        1:  -30,   
-        2:  150,  
-        3:  -30,   
-        4:  150,  
-        5:  -30,   
-        6:  150   
+        1:  -30,
+        2:  150,
+        3:  -30,
+        4:  150,
+        5:  -30,
+        6:  150
     };
     const SPEECH_MARGIN = 180;
 
@@ -81,7 +81,7 @@ $(document).ready(function () {
     /*--EQ Config----------------------------*/
 
     const eqConfig = {
-        volumeSensitivity: 4, 
+        volumeSensitivity: 4,
         idleAmplitude: 100,
         baseFlowSpeed: 0.2,
         flowSpeedBoost: 0.01,
@@ -111,11 +111,11 @@ $(document).ready(function () {
 
     const poemAppear = {
         initialDelay: 2000,
-        wordStagger: 100 
+        wordStagger: 100
     };
 
     const poemDisappear = {
-        wordStagger: 50 
+        wordStagger: 50
     };
 
     /*--Replacements-------------------------*/
@@ -140,21 +140,21 @@ $(document).ready(function () {
         "retard", "nyomorék", "féreg", "szemét",
         "buzi", "ribanc", "ringyó", "mocsok",
 
-        "fuck", "shit", "bitch", "cunt", "asshole", 
-        "dick", "pussy", "slut", "whore", "nigga", "nigger", 
+        "fuck", "shit", "bitch", "cunt", "asshole",
+        "dick", "pussy", "slut", "whore", "nigga", "nigger",
         "faggot", "bastard", "damn", "crap", "hoe"
     ];
 
     const cuteWords = [
-        "cica", "kiskutya", "nyuszi", "pillangó", "őzike", 
+        "cica", "kiskutya", "nyuszi", "pillangó", "őzike",
         "süni", "mókus", "katicabogár", "kismadár", "méhecske",
-        "virág", "tulipán", "napsugár", "csillag", "felhő", 
+        "virág", "tulipán", "napsugár", "csillag", "felhő",
         "szivárvány", "hajnal", "tavasz", "harmatcsepp", "hópehely",
         "szellő", "holdfény", "cseresznyevirág",
-        "fagyi", "vattacukor", "habcsók", "palacsinta", "eper", 
+        "fagyi", "vattacukor", "habcsók", "palacsinta", "eper",
         "málna", "csokoládé", "méz", "süti",
-        "szeretet", "aranyos", "cuki", "mosoly", "ölelés", 
-        "boldogság", "csoda", "varázslat","kacagás", "álom", 
+        "szeretet", "aranyos", "cuki", "mosoly", "ölelés",
+        "boldogság", "csoda", "varázslat","kacagás", "álom",
         "harmónia", "ragyogás"
     ];
 
@@ -173,17 +173,17 @@ $(document).ready(function () {
                     function adjust() {
                     // Do not move elements on static resize if physics or puzzle is active
                     if (physicsActive || $('#puzzle-parking').hasClass('is-spinning')) return;
-                    
+
                     let pid     = 'h' + me.attr('data-parent');
                     let $parent = $('#' + pid);
-                    
+
                     if (!$parent.length) return;
                     let targetPos  = $parent.find('.target').offset();
                     let nativeEl   = document.getElementById(pid);
-                    
+
                     if (!nativeEl) return;
                     let tr = window.getComputedStyle(nativeEl, null).getPropertyValue('transform');
-                    
+
                     me.css({
                         top:    targetPos.top,
                         left:   targetPos.left,
@@ -201,19 +201,19 @@ $(document).ready(function () {
     $('.ufo').ufo();
 
     /*--Audio Visualizer---------------------*/
-    
+
     let audioCtx = null;
     let analyser = null;
     let dataArray = null;
-    let eqCurrentVol = 0;     
-    let eqTargetSens = 0;     
-    let eqCurrentSens = 0;    
-    let audioStream = null; 
-    
+    let eqCurrentVol = 0;
+    let eqTargetSens = 0;
+    let eqCurrentSens = 0;
+    let audioStream = null;
+
 const eqLines = [];
     eqConfig.lines.forEach((config, index) => {
         const el = document.querySelector(`.eq-line-${index + 1}`);
-        
+
         if (el) {
             let currentOpacity = 1.0;
             if (eqConfig.lines.length > 1) {
@@ -222,9 +222,9 @@ const eqLines = [];
                 const opacityStep = (maxOpacity - minOpacity) / (eqConfig.lines.length - 1);
                 currentOpacity = maxOpacity - (index * opacityStep);
             }
-            
+
             el.style.opacity = currentOpacity;
-            
+
             eqLines.push({
                 el: el,
                 sens: config.sens,
@@ -235,24 +235,24 @@ const eqLines = [];
         }
     });
     async function initAudioEq() {
-        if (audioCtx && audioStream && audioStream.active) return; 
-        
+        if (audioCtx && audioStream && audioStream.active) return;
+
         try {
-            audioStream = await navigator.mediaDevices.getUserMedia({ 
+            audioStream = await navigator.mediaDevices.getUserMedia({
             audio: {
             autoGainControl: false,
             echoCancellation: false,
-            noiseSuppression: false 
-                } 
+            noiseSuppression: false
+                }
             });
-            
+
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 analyser = audioCtx.createAnalyser();
                 analyser.fftSize = 256;
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
             }
-            
+
             const source = audioCtx.createMediaStreamSource(audioStream);
             source.connect(analyser);
         } catch (err) {
@@ -265,21 +265,21 @@ const eqLines = [];
         if (analyser && dataArray) {
             analyser.getByteFrequencyData(dataArray);
             let sum = 0;
-            let currentMax = 0; 
-            
+            let currentMax = 0;
+
             for (let i = 0; i < dataArray.length; i++) {
                 sum += dataArray[i];
                 if (dataArray[i] > currentMax) currentMax = dataArray[i];
             }
-            rawVol = sum / dataArray.length; 
-            
-            currentVolumeLevel = currentMax; 
-            
+            rawVol = sum / dataArray.length;
+
+            currentVolumeLevel = currentMax;
+
             if (currentMax >= VOLUME_THRESHOLD) {
                 gateOpenUntil = Date.now() + GATE_HOLD_TIME;
             }
         }
-        
+
         eqCurrentSens += (eqTargetSens - eqCurrentSens) * 0.03;
         eqCurrentVol += (rawVol - eqCurrentVol) * 0.15;
 
@@ -292,18 +292,18 @@ const eqLines = [];
         const w = window.innerWidth;
         const h = window.innerHeight;
         const midY = h / 2;
-        
+
         const baseAmplitude = (eqConfig.idleAmplitude + (eqCurrentVol * eqConfig.volumeSensitivity)) * eqCurrentSens;
         const currentFlowSpeed = eqConfig.baseFlowSpeed + (eqCurrentVol * eqConfig.flowSpeedBoost);
 
         eqLines.forEach(line => {
             if (!line.el) return;
-            
-            line.phase += line.speed * currentFlowSpeed; 
-            
+
+            line.phase += line.speed * currentFlowSpeed;
+
             let d = `M 0 ${midY}`;
-            
-            const points = 50; 
+
+            const points = 50;
             for(let i = 0; i <= points; i++) {
                 const x = (i / points) * w;
                 const normalizedX = i / points;
@@ -332,7 +332,7 @@ const eqLines = [];
     let speechRaf = null;
     let visibleLineCount = 0;
     const lineData = {};
-    let recognizedWords = []; 
+    let recognizedWords = [];
 
     function getCubeCenter(ufoIndex) {
         const cube = $('.ufo[data-parent="' + ufoIndex + '"]').find('.ufo-cube')[0];
@@ -370,7 +370,7 @@ const eqLines = [];
             const dy = data.endY - center.y;
             const maxLen = Math.sqrt(dx * dx + dy * dy);
             const currentLen = maxLen * eased;
-            
+
             const angleDeg = (Math.atan2(dy, dx) * 180 / Math.PI) - 90;
 
             $speechLines[i].css({
@@ -390,12 +390,12 @@ const eqLines = [];
         if (anyActive) {
             speechRaf = requestAnimationFrame(trackSpeechLines);
         } else {
-            speechRaf = null; 
+            speechRaf = null;
         }
     }
 
     function showNextSpeechLine(spokenWord = "HELLO") {
-        
+
         if (visibleLineCount >= 6) return;
 
         recognizedWords.push(spokenWord);
@@ -411,25 +411,25 @@ const eqLines = [];
 
         visibleLineCount++;
         const i = visibleLineCount;
-        
+
         $(`#text-box-${i} p`).text(spokenWord);
-        
+
         const center = getCubeCenter(i);
         if (!center) return;
 
         const angleRad = speechAngles[i] * Math.PI / 180;
-        const dirY = Math.cos(angleRad); 
+        const dirY = Math.cos(angleRad);
         const targetY = dirY > 0 ? window.innerHeight - SPEECH_MARGIN : SPEECH_MARGIN;
         const fullLength = Math.max(0, Math.abs((targetY - center.y) / Math.abs(dirY)));
-        
+
         const fixEndX = center.x - Math.sin(angleRad) * fullLength;
         const fixEndY = targetY;
 
         lineData[i] = {
             active: true,
             closing: false,
-            endX: fixEndX,      
-            endY: fixEndY,      
+            endX: fixEndX,
+            endY: fixEndY,
             startTime: performance.now()
         };
 
@@ -444,10 +444,10 @@ const eqLines = [];
             '--recoil-dur': speechConfig.recoilDur,
             '--recoil-ease': speechConfig.recoilEase
         });
-        
+
         $currentUfo.addClass('ufo-active-speech');
         $currentUfo.find('.ufo-circle').addClass('ufo-circle-active');
-        
+
         if (!speechRaf) {
             speechRaf = requestAnimationFrame(trackSpeechLines);
         }
@@ -457,30 +457,30 @@ const eqLines = [];
 
             const config = textBoxConfig[i];
             const $box = $(`#text-box-${i}`);
-            
+
             $box.css({
                 left: fixEndX,
                 top: fixEndY,
                 transform: `translate(${config.anchor})`
             });
-            
+
             $box.find('.floating-background').css({
                 left: config.bgSide === 'left' ? '0' : 'auto',
                 right: config.bgSide === 'right' ? '0' : 'auto'
             });
 
             $box.find(config.primary.join(', ')).addClass('floating-cube-appear');
-            
+
             setTimeout(function() {
                 if (lineData[i] && lineData[i].closing) return; // Safety break
                 $box.find('.floating-background').addClass('floating-background-appear');
-                $box.find('p').addClass('floating-text-p-appear'); 
-                
+                $box.find('p').addClass('floating-text-p-appear');
+
                 setTimeout(function() {
                     if (lineData[i] && lineData[i].closing) return; // Safety break
                     $box.find(config.secondary.join(', ')).addClass('floating-cube-appear');
                 }, 700);
-                
+
             }, 200);
 
         }, speechConfig.duration);
@@ -491,17 +491,17 @@ const eqLines = [];
             if (callback) callback();
             return;
         }
-        
+
         for (let i = 1; i <= visibleLineCount; i++) {
             const config = textBoxConfig[i];
             const $box = $(`#text-box-${i}`);
-            
+
             $box.find(config.secondary.join(', ')).removeClass('floating-cube-appear');
-            
+
             setTimeout(function() {
                 $box.find('p').removeClass('floating-text-p-appear');
                 $box.find('.floating-background').removeClass('floating-background-appear');
-                
+
                 setTimeout(function() {
                     $box.find(config.primary.join(', ')).removeClass('floating-cube-appear');
                 }, 700);
@@ -513,12 +513,12 @@ const eqLines = [];
             for (let i = 1; i <= 6; i++) {
                 if (lineData[i] && lineData[i].active && !lineData[i].closing) {
                     lineData[i].closing = true;
-                    lineData[i].startTime = now; 
+                    lineData[i].startTime = now;
                 }
             }
-            
+
             $('.ufo').css({ '--recoil-x': '0px', '--recoil-y': '0px' });
-            
+
             if (!speechRaf) {
                 speechRaf = requestAnimationFrame(trackSpeechLines);
             }
@@ -535,11 +535,11 @@ const eqLines = [];
         if (currentPhase !== 'spaced') return;
         showNextSpeechLine();
     }
-    
+
     /*--Rotation-----------------------------*/
 
     const SPEED = 700;
-    let idleTimers = {}; 
+    let idleTimers = {};
 
     function stopIdleRotation() {
         for (let key in idleTimers) {
@@ -573,7 +573,7 @@ const eqLines = [];
 
     function applyRotationForPhase(phase) {
         stopIdleRotation();
-        
+
         if (phase === 'hidden' || phase === 'puzzle') {
             $('.ufo').each(function () {
                 const index = parseInt($(this).attr('data-parent'));
@@ -598,7 +598,7 @@ const eqLines = [];
     let puzzleTrackingRaf = null;
     let puzzleLastTrackTime = 0;
     let puzzleSwapTimeout = null;
-    let puzzleStartSpinTimeout = null; 
+    let puzzleStartSpinTimeout = null;
 
     function getRotation(el) {
         if (!el) return 0;
@@ -611,7 +611,7 @@ const eqLines = [];
 
     function trackPuzzleMovement(time) {
         if (currentPhase !== 'puzzle') return;
-        
+
         const delta = time - puzzleLastTrackTime;
         puzzleLastTrackTime = time;
 
@@ -627,7 +627,7 @@ const eqLines = [];
 
             let target = $parent.find('.target');
             if (!target.length) return;
-            
+
             let rect = target[0].getBoundingClientRect();
             let targetPos = {
                 left: (rect.left + window.scrollX + rect.width / 2) - $parent.width() / 2,
@@ -644,7 +644,7 @@ const eqLines = [];
             let newLeft = targetPos.left;
             let newTop = targetPos.top;
 
-            let newRot = parentAngle; 
+            let newRot = parentAngle;
             ufoCurrentRotation[index] = newRot;
 
             let nativeEl = document.getElementById(pid);
@@ -664,9 +664,9 @@ const eqLines = [];
 
     function doPuzzleSwap() {
         if (currentPhase !== 'puzzle') return;
-        
+
         let indices = [1, 2, 3, 4, 5, 6].sort(() => 0.5 - Math.random());
-        let activeOnes = indices.slice(0, 3); 
+        let activeOnes = indices.slice(0, 3);
 
         $('.ufo').removeClass('ufo-active-speech');
         $('.ufo .ufo-circle').removeClass('ufo-circle-active');
@@ -679,35 +679,35 @@ const eqLines = [];
     }
 
     $('#puzzle-parking').on('animationiteration', function() {
-        puzzleSwapTimeout = setTimeout(doPuzzleSwap, puzzleConfig.rotationSpeed / 2); 
+        puzzleSwapTimeout = setTimeout(doPuzzleSwap, puzzleConfig.rotationSpeed / 2);
     });
 
     function startPuzzlePhase() {
         lastUfoPos = {};
         ufoVelocities = {};
-        
+
         puzzleStartSpinTimeout = setTimeout(() => {
             if (currentPhase !== 'puzzle') return;
-            
+
             $('.ufo').addClass('ufo-puzzle-tracking');
-            
+
             $('#puzzle-parking').css('animation-duration', puzzleConfig.rotationSpeed + 'ms');
             $('#puzzle-parking').addClass('is-spinning');
-            
+
             puzzleLastTrackTime = performance.now();
             puzzleTrackingRaf = requestAnimationFrame(trackPuzzleMovement);
-            
+
             puzzleSwapTimeout = setTimeout(doPuzzleSwap, puzzleConfig.rotationSpeed / 2);
-            
-        }, puzzleConfig.spinDelay); 
+
+        }, puzzleConfig.spinDelay);
     }
 
     function stopPuzzlePhase() {
         $('.ufo').removeClass('ufo-puzzle-tracking');
         $('#puzzle-parking').removeClass('is-spinning');
-        $('#puzzle-parking').css('animation-duration', ''); 
-        
-        clearTimeout(puzzleStartSpinTimeout); 
+        $('#puzzle-parking').css('animation-duration', '');
+
+        clearTimeout(puzzleStartSpinTimeout);
         clearTimeout(puzzleSwapTimeout);
         cancelAnimationFrame(puzzleTrackingRaf);
         $('.ufo').removeClass('ufo-active-speech');
@@ -726,7 +726,7 @@ const eqLines = [];
         } else {
             $('.button-step03').addClass('button-disabled');
         }
-        
+
         if (currentPhase === 'physics') {
             $('.button-step06').removeClass('button-disabled');
         } else {
@@ -741,16 +741,16 @@ const eqLines = [];
     }
 
     function doSwitchPhase(newPhase) {
-        
+
         if (newPhase === 'hidden' || newPhase === 'spaced') {
             recognizedWords = [];
             console.log(`Memory cleared (${newPhase} phase).`);
         }
 
-        if ((newPhase === 'hidden' || newPhase === 'spaced' || newPhase === 'puzzle') && 
+        if ((newPhase === 'hidden' || newPhase === 'spaced' || newPhase === 'puzzle') &&
             (poemIsVisible || $('#poem .word.word-active').length > 0)) {
             resetPoem(function() {
-                finalizePhaseSwitch(newPhase); 
+                finalizePhaseSwitch(newPhase);
             });
         } else {
             finalizePhaseSwitch(newPhase);
@@ -779,8 +779,8 @@ const eqLines = [];
 
         if (newPhase === 'physics') {
             stopIdleRotation();
-            
-            $('#eq-container').removeClass('is-active-eq'); 
+
+            $('#eq-container').removeClass('is-active-eq');
             eqTargetSens = 0;
 
             if (currentPhase !== 'physics') {
@@ -830,12 +830,12 @@ const eqLines = [];
         }
 
         if (newPhase === 'spaced') {
-            $('#eq-container').addClass('is-active-eq'); 
+            $('#eq-container').addClass('is-active-eq');
             eqTargetSens = 1;
-            spacedPhaseReadyTime = Date.now() + 1000; 
+            spacedPhaseReadyTime = Date.now() + 1000;
         } else {
-            $('#eq-container').removeClass('is-active-eq'); 
-            eqTargetSens = 0;                               
+            $('#eq-container').removeClass('is-active-eq');
+            eqTargetSens = 0;
         }
 
         if (newPhase === 'hidden' || newPhase === 'spaced') {
@@ -844,7 +844,7 @@ const eqLines = [];
                 if (recognition) {
                     try { recognition.start(); } catch(e) {}
                 }
-            }                         
+            }
         }
 
         if (newPhase === 'emotion') {
@@ -875,10 +875,10 @@ const eqLines = [];
             if (currentPhase === 'spaced' && visibleLineCount > 0) {
                 recognizedWords = [];
                 processedWordCount = 0;
-                
+
                 console.log("Memory cleared (manual Spaced reset).");
                 retractSpeechLines();
-                
+
                 setTimeout(() => {
                     if (currentPhase === 'spaced' && recognizedWords.length === 0) {
                         $('.ufo').removeClass('ufo-active-speech');
@@ -947,9 +947,9 @@ const eqLines = [];
             const currentDeg = ufoCurrentRotation[index] || 0;
             Body.setAngle(body, currentDeg * (Math.PI / 180));
             Body.setAngularVelocity(body, (Math.random() - 0.5) * physicsConfig.explosionSpin);
-            Body.setVelocity(body, { 
-                x: (Math.random() - 0.5) * physicsConfig.explosionForceX, 
-                y: physicsConfig.explosionForceY 
+            Body.setVelocity(body, {
+                x: (Math.random() - 0.5) * physicsConfig.explosionForceX,
+                y: physicsConfig.explosionForceY
             });
             ufoBodies.push({ dom: $el, body: body, w: w, h: h, index: index });
             Composite.add(physicsEngine.world, body);
@@ -994,16 +994,16 @@ const eqLines = [];
     }
 
     /*--Speech Recognition-------------------*/
-    
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
     let processedWordCount = 0;
 
     if (SpeechRecognition && appConfig.enableMic) {
         recognition = new SpeechRecognition();
-        recognition.continuous = true;     
+        recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'hu-HU';        
+        recognition.lang = 'hu-HU';
 
         recognition.onresult = function(event) {
 
@@ -1024,8 +1024,8 @@ const eqLines = [];
             }
 
             if (currentPhase !== 'spaced' || Date.now() < spacedPhaseReadyTime) {
-                processedWordCount = words.length; 
-                return; 
+                processedWordCount = words.length;
+                return;
             }
 
             let stableWords = words;
@@ -1036,17 +1036,17 @@ const eqLines = [];
            let newWordsToProcess = [];
             for (let i = processedWordCount; i < stableWords.length; i++) {
                 let rawWord = stableWords[i];
-                
+
                 if (Date.now() > gateOpenUntil) {
                     console.log(`[Noise Gate] Rejected (closed) word "${rawWord}" (Vol ${Math.round(currentVolumeLevel)} / Thresh ${VOLUME_THRESHOLD})`);
                     processedWordCount++;
-                    continue; 
+                    continue;
                 }
-                
+
                 let cleanWord = rawWord.replace(/[.,!?]/g, '').toLowerCase();
                 let normalizedWord = removeAccents(cleanWord);
                 let isStopWord = stopWords.includes(cleanWord);
-                
+
                 let isProfanity = profanities.some(swear => {
                     let normalizedSwear = removeAccents(swear);
                     return normalizedWord.includes(normalizedSwear);
@@ -1058,17 +1058,17 @@ const eqLines = [];
                         newWordsToProcess.push(randomCuteWord);
                         console.log(`[Noise Gate] Collected (Censored) "${randomCuteWord}" (Original "${rawWord}", Vol ${Math.round(currentVolumeLevel)})`);
                     }
-                } 
+                }
                 else if (!isStopWord) {
                     if (visibleLineCount + newWordsToProcess.length < 6) {
                         newWordsToProcess.push(rawWord);
                         console.log(`[Noise Gate] Collected "${rawWord}" (Vol ${Math.round(currentVolumeLevel)})`);
                     }
-                } 
+                }
                 else {
                    console.log(`[Noise Gate] Filtered (Stop word) "${rawWord}" (Vol ${Math.round(currentVolumeLevel)})`);
                 }
-                
+
                 processedWordCount++;
             }
 
@@ -1090,7 +1090,7 @@ const eqLines = [];
         if (currentPhase === 'hidden' || currentPhase === 'spaced') {
             try { recognition.start(); } catch(e) {}
         }
-        
+
     } else {
         if (!appConfig.enableMic) {
             console.log("Microphone disabled for testing (appConfig.enableMic = false).");
@@ -1108,15 +1108,15 @@ const eqLines = [];
         $('#poem .word').each(function() {
             let $art = $(this);
             let text = $art.text().trim().toLowerCase();
-            
+
             // Strict typography rule for articles
             if (text === 'a' || text === 'az' || text === 'egy') {
                 let $next = $art.next('.word');
-                
+
                 if ($next.length) {
                     // 1. Add a monospaced space to the right
                     $art.css('margin-right', '1ch');
-                    
+
                     // 2. Wrap them in a non-breaking twin container
                     $art.add($next).wrapAll('<span class="ufo-typo-twin" style="display: inline-block; white-space: nowrap;"></span>');
                 }
@@ -1125,8 +1125,8 @@ const eqLines = [];
     }
 
     function applyPoemStyles() {
-        let matchedWordsThisRound = []; 
-        let matchCount = 0;             
+        let matchedWordsThisRound = [];
+        let matchCount = 0;
 
         $('#poem .word').each(function() {
             let $word = $(this);
@@ -1134,19 +1134,19 @@ const eqLines = [];
 
             let rawText = $word.text();
             let cleanText = rawText.replace(/[.,!?]/g, '').toLowerCase();
-            
+
             let matchedOriginalWord = recognizedWords.find(rw => cleanText === rw.toLowerCase());
 
             if (matchedOriginalWord && !matchedWordsThisRound.includes(matchedOriginalWord) && matchCount < 6) {
-                
-                matchedWordsThisRound.push(matchedOriginalWord); 
-                matchCount++; 
-                
+
+                matchedWordsThisRound.push(matchedOriginalWord);
+                matchCount++;
+
                 $word.addClass('floating-match');
-                $word.attr('data-match-index', matchCount); 
+                $word.attr('data-match-index', matchCount);
 
                 $word.html(`<span class="match-text">${rawText}</span>`);
-                
+
                 $word.append(`
                     <div class="floating-cube edge-01"></div>
                     <div class="floating-cube edge-02"></div>
@@ -1160,12 +1160,12 @@ const eqLines = [];
 
     function animatePoem() {
     if (!recognizedWords.length) return;
-        if (currentPhase !== 'physics') return; 
+        if (currentPhase !== 'physics') return;
 
         if (poemSplitInstance) {
             poemSplitInstance.revert();
         }
-        
+
         poemSplitInstance = new SplitType('#poem', { types: 'words' });
 
         // Run typography fix first
@@ -1177,38 +1177,38 @@ const eqLines = [];
 
         $('#poem .word').each(function(index) {
             let $word = $(this);
-            
+
             setTimeout(() => {
-                if (currentPhase !== 'physics') return; 
+                if (currentPhase !== 'physics') return;
 
                 $word.addClass('word-active');
-                
+
                 if ($word.hasClass('floating-match')) {
                     setTimeout(() => {
-                        if (currentPhase !== 'physics') return; 
+                        if (currentPhase !== 'physics') return;
                         $word.find('.edge-01, .edge-03').addClass('floating-cube-appear');
-                        
+
                         setTimeout(() => {
-                            if (currentPhase !== 'physics') return; 
+                            if (currentPhase !== 'physics') return;
                             $word.find('.floating-background').addClass('floating-background-appear');
-                            
+
                             setTimeout(() => {
-                                if (currentPhase !== 'physics') return; 
+                                if (currentPhase !== 'physics') return;
                                 $word.addClass('text-active');
                                 $word.find('.edge-02, .edge-04').addClass('floating-cube-appear');
-                            }, 300); 
-                            
-                        }, 150); 
-                        
-                    }, 200); 
+                            }, 300);
+
+                        }, 150);
+
+                    }, 200);
                 }
-                
+
                 if (index === totalWords - 1) {
                     poemIsVisible = true;
                     // AUTOMATION HOOK: The poem is rendered
                     if (typeof Automation !== 'undefined') Automation.onPoemFinished();
                 }
-            }, index * poemAppear.wordStagger); 
+            }, index * poemAppear.wordStagger);
         });
     }
 
@@ -1217,13 +1217,13 @@ const eqLines = [];
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             if (poemSplitInstance && poemIsVisible) {
-                poemSplitInstance.revert(); 
+                poemSplitInstance.revert();
                 poemSplitInstance.split();
 
                 applyTypographyFix();
                 applyPoemStyles();
-                
-                $('#poem .word').addClass('word-active'); 
+
+                $('#poem .word').addClass('word-active');
                 $('#poem .floating-match').addClass('text-active');
                 $('#poem .floating-background').addClass('floating-background-appear');
                 $('#poem .floating-cube').addClass('floating-cube-appear');
@@ -1252,16 +1252,16 @@ const eqLines = [];
         $('#poem .floating-background').removeClass('floating-background-appear');
 
         poemResetTimer1 = setTimeout(() => {
-            
+
             let $words = $('#poem .word');
             let totalWords = $words.length;
-            
+
             $($words.get().reverse()).each(function(index) {
                 let $word = $(this);
-                
+
                 setTimeout(() => {
                     $word.removeClass('word-active');
-                    
+
                     if (index === totalWords - 1) {
                         setTimeout(() => {
                             if (poemSplitInstance) {
@@ -1271,10 +1271,10 @@ const eqLines = [];
                             if (callback) callback();
                         }, 300);
                     }
-                }, index * poemDisappear.wordStagger); 
+                }, index * poemDisappear.wordStagger);
             });
 
-        }, 400); 
+        }, 400);
     }
 
     /*--Emotion Phase------------------------*/
@@ -1299,24 +1299,24 @@ const eqLines = [];
             if (!data || !data.active) continue;
 
             anyActive = true;
-            
+
             if (now < data.startTime) {
                 data.$line.css({ opacity: 0 });
-                continue; 
+                continue;
             }
 
             let t = (now - data.startTime) / speechConfig.duration;
             if (t > 1) t = 1;
             if (t < 0) t = 0;
 
-            let eased = data.closing ? 1 - (Easing[speechConfig.easingClose] || Easing.inCubic)(t) 
+            let eased = data.closing ? 1 - (Easing[speechConfig.easingClose] || Easing.inCubic)(t)
                                      : (Easing[speechConfig.easingOpen] || Easing.outCubic)(t);
 
             const dx = data.endX - data.startX;
             const dy = data.endY - data.startY;
             const maxLen = Math.sqrt(dx * dx + dy * dy);
             const currentLen = maxLen * eased;
-            
+
             const angleDeg = (Math.atan2(dy, dx) * 180 / Math.PI) - 90;
 
             data.$line.css({
@@ -1336,7 +1336,7 @@ const eqLines = [];
         if (anyActive) {
             emotionLinesRaf = requestAnimationFrame(trackEmotionLines);
         } else {
-            emotionLinesRaf = null; 
+            emotionLinesRaf = null;
         }
     }
 
@@ -1350,7 +1350,7 @@ const eqLines = [];
         }
         $('#emotion-lines-holder').empty();
 
-        let placedBoxes = []; 
+        let placedBoxes = [];
 
         const pRect = document.getElementById('poem').getBoundingClientRect();
         const poemRect = {
@@ -1368,7 +1368,7 @@ const eqLines = [];
             BR: { edge: '.edge-04', anchor: '0, 0',         boxLeft: (x, w)=>x,     boxTop: (y, h)=>y,     bgSide: 'left',  dirX: dX,  dirY: dY,  pCubes: ['.edge-01', '.edge-03'], sCubes: ['.edge-02', '.edge-04'] }
         };
 
-        let delayCounter = 0; 
+        let delayCounter = 0;
 
         function getBoxRect(ray, startX, startY, len, w, h) {
             let endX = startX + ray.dirX * len;
@@ -1382,9 +1382,9 @@ const eqLines = [];
             if (rect.left < 50 || rect.right > wW - 50 || rect.top < 50 || rect.bottom > wH - 50) return true;
             if (!(rect.left > poemRect.right || rect.right < poemRect.left || rect.top > poemRect.bottom || rect.bottom < poemRect.top)) return true;
             for (let pb of placedBoxes) {
-                if (!(rect.left > pb.right + padding || rect.right < pb.left - padding || 
+                if (!(rect.left > pb.right + padding || rect.right < pb.left - padding ||
                       rect.top > pb.bottom + padding || rect.bottom < pb.top - padding)) {
-                    return true; 
+                    return true;
                 }
             }
             return false;
@@ -1397,7 +1397,7 @@ const eqLines = [];
 
             activeEmotionCount++;
             let $box = $(`#emotion-box-${index}`);
-            
+
             let boxWidth = $box.outerWidth() || 160;
             let boxHeight = $box.outerHeight() || 100;
 
@@ -1406,7 +1406,7 @@ const eqLines = [];
             let isTop = wordOffset.top < wH / 2;
 
             let sequence = [];
-            
+
             if (isTop && isLeft) {
                 // Word is Top-Left. Priority: Top-Right -> Bottom-Right -> Top-Left -> Bottom-Left
                 sequence = ['TR', 'BR', 'TL', 'BL'];
@@ -1431,15 +1431,15 @@ const eqLines = [];
 
                 let idealTargetY = (ray.dirY < 0) ? SPEECH_MARGIN : (wH - SPEECH_MARGIN);
                 let idealLenY = (idealTargetY - center.y) / ray.dirY;
-                
+
                 let idealTargetX = (ray.dirX < 0) ? (50 + boxWidth) : (wW - 50 - boxWidth);
                 let idealLenX = (idealTargetX - center.x) / ray.dirX;
-                
+
                 let idealLen = Math.min(idealLenY, idealLenX);
-                if (idealLen < 40) idealLen = 40; 
+                if (idealLen < 40) idealLen = 40;
 
                 let rectData = getBoxRect(ray, center.x, center.y, idealLen, boxWidth, boxHeight);
-                
+
                 // If it fits perfectly on the margin, lock it in and break the loop
                 if (!checkCollision(rectData, 20)) {
                     finalSpot = { ray: ray, center: center, endX: rectData.endX, endY: rectData.endY, rect: rectData };
@@ -1471,9 +1471,9 @@ const eqLines = [];
                     // Test incrementally shorter lengths to find the closest fit
                     for (let testLen = 40; testLen <= maxValidLen; testLen += 5) {
                         let rectData = getBoxRect(ray, center.x, center.y, testLen, boxWidth, boxHeight);
-                        
-                        if (!checkCollision(rectData, 15)) { 
-                            let deviation = Math.abs(testLen - idealLen); 
+
+                        if (!checkCollision(rectData, 15)) {
+                            let deviation = Math.abs(testLen - idealLen);
                             if (deviation < bestDeviation) {
                                 bestDeviation = deviation;
                                 bestCandidate = { ray: ray, center: center, endX: rectData.endX, endY: rectData.endY, rect: rectData };
@@ -1488,7 +1488,7 @@ const eqLines = [];
             if (!finalSpot) {
                 let ray = RAYS[sequence[0]];
                 let center = getWordCubeCenter($word, ray.edge);
-                
+
                 let idealTargetY = (ray.dirY < 0) ? SPEECH_MARGIN : (wH - SPEECH_MARGIN);
                 let idealLenY = (idealTargetY - center.y) / ray.dirY;
                 let idealTargetX = (ray.dirX < 0) ? (50 + boxWidth) : (wW - 50 - boxWidth);
@@ -1509,10 +1509,10 @@ const eqLines = [];
 
             emotionLineData[index] = {
                 active: true, closing: false,
-                $line: $line, 
+                $line: $line,
                 startX: finalSpot.center.x, startY: finalSpot.center.y,
                 endX: finalSpot.endX, endY: finalSpot.endY,
-                startTime: performance.now() + delay 
+                startTime: performance.now() + delay
             };
 
             if (!emotionLinesRaf) {
@@ -1531,15 +1531,15 @@ const eqLines = [];
                 });
 
                 $box.find(finalSpot.ray.pCubes.join(', ')).addClass('floating-cube-appear');
-                
+
                 setTimeout(function() {
                     $box.find('.floating-background').addClass('floating-background-appear');
                     $box.find('p').addClass('floating-text-p-appear');
-                    
+
                     setTimeout(function() {
                         $box.find(finalSpot.ray.sCubes.join(', ')).addClass('floating-cube-appear');
                     }, 700);
-                    
+
                 }, 200);
 
             }, delay + speechConfig.duration);
@@ -1559,7 +1559,7 @@ const eqLines = [];
         for (let i = 1; i <= 6; i++) {
             const $box = $(`#emotion-box-${i}`);
             $box.find('.floating-cube').removeClass('floating-cube-appear');
-            
+
             setTimeout(function() {
                 $box.find('p').removeClass('floating-text-p-appear');
                 $box.find('.floating-background').removeClass('floating-background-appear');
@@ -1571,7 +1571,7 @@ const eqLines = [];
             for (let i = 1; i <= 6; i++) {
                 if (emotionLineData[i] && emotionLineData[i].active && !emotionLineData[i].closing) {
                     emotionLineData[i].closing = true;
-                    emotionLineData[i].startTime = now; 
+                    emotionLineData[i].startTime = now;
                 }
             }
 
@@ -1581,13 +1581,13 @@ const eqLines = [];
 
             setTimeout(function () {
                 activeEmotionCount = 0;
-                $('#emotion-lines-holder').empty(); 
+                $('#emotion-lines-holder').empty();
                 if (callback) callback();
             }, speechConfig.duration + 50);
 
         }, 900);
     }
-    
+
     /*--Buttons------------------------------*/
 
     document.fonts.ready.then(function () {
@@ -1598,25 +1598,25 @@ const eqLines = [];
 
     updateSpeechButtonState();
 
-    /* BUTTON FUNCTIONS COMMENTED OUT FOR AUTOMATION:
+    //BUTTON FUNCTIONS COMMENTED OUT FOR AUTOMATION:
     $('.button-step01').on('click', function () { switchPhase('hidden');  });
     $('.button-step02').on('click', function () { switchPhase('spaced');  });
     $('.button-step03').on('click', function () { handleSpeechButton();   });
     $('.button-step04').on('click', function () { switchPhase('puzzle');  });
     $('.button-step05').on('click', function () { switchPhase('physics'); });
     $('.button-step06').on('click', function () { switchPhase('emotion'); });
-    */
+
 
     /*--Volume Debug-------------------------*/
 
     if (VOLUME_DEBUG) {
-        $('#current-volume').css('display', 'flex'); 
-        
+        $('#current-volume').css('display', 'flex');
+
         setInterval(() => {
             $('#current-volume p').eq(1).text(Math.round(currentVolumeLevel));
-        }, 500); 
+        }, 500);
     } else {
-        $('#current-volume').hide(); 
+        $('#current-volume').hide();
     }
 
     /*--State Manager------------------------*/
@@ -1654,13 +1654,13 @@ const eqLines = [];
 
         startPuzzleProcessing: function(totalTime) {
             this.hide($('.spacedPhase'));
-            
+
             let $states = $('.puzzlePhase');
             let numStates = $states.length;
             if (numStates === 0) return;
-            let minChunk = autoConfig.minStateDuration; 
+            let minChunk = autoConfig.minStateDuration;
             let chunks = [];
-            
+
             if (numStates * minChunk > totalTime) {
                 chunks = Array(numStates).fill(totalTime / numStates);
             } else {
@@ -1685,7 +1685,7 @@ const eqLines = [];
                     if (index > 0) this.hide($states.eq(index - 1)); // Hide previous
                     this.show($el); // Show new
                 }, cumulativeDelay);
-                
+
                 this.puzzleTimers.push(t1);
                 cumulativeDelay += duration;
             });
@@ -1694,7 +1694,7 @@ const eqLines = [];
         startCountdown: function(totalMs) {
             let $el = $('.emotionPhase');
             let seconds = Math.ceil(totalMs / 1000);
-            
+
             $el.text('Újrakezdés: ' + seconds);
             this.show($el);
 
@@ -1703,7 +1703,7 @@ const eqLines = [];
                 if(seconds <= 0) {
                     clearInterval(this.countdownInterval);
                     // Hide the number, keep only the text when it reaches 0
-                    $el.text('Újrakezdés'); 
+                    $el.text('Újrakezdés');
                 } else {
                     $el.text('Újrakezdés: ' + seconds);
                 }
@@ -1713,9 +1713,9 @@ const eqLines = [];
             $('.state-visual').css('opacity', 1);
             $('.state-visual-left').addClass('state-visual-left-active');
             $('.state-visual-right').addClass('state-visual-right-active');
-            
+
             // Wait for the animation to finish
-            setTimeout(callback, 800); 
+            setTimeout(callback, 800);
         },
         hideBrackets: function() {
             $('.state-visual-left').removeClass('state-visual-left-active');
@@ -1727,7 +1727,7 @@ const eqLines = [];
 
     const Automation = {
         timer: null,
-        
+
         // Helper: clears previous timer and sets a new one
         schedule: function(phase, delay) {
             if (this.timer) clearTimeout(this.timer);
@@ -1751,7 +1751,7 @@ const eqLines = [];
                     if (currentPhase === 'puzzle') {
                         // Subtract the fade-in time from the available time
                         let remainingTime = autoConfig.puzzleToPhysics - puzzleConfig.spinDelay;
-                        
+
                         // Safety check
                         if (remainingTime > 0) {
                             StateManager.startPuzzleProcessing(remainingTime);
@@ -1804,7 +1804,7 @@ const eqLines = [];
     Automation.start();
 
     /*--AI API Setup-------------------------*/
-    
+
     const aiPrompts = {
         combined: `Írj egy rövid, egyetlen bekezdésből álló, maximum 50-60 szavas költői verset az alábbi 6 szó felhasználásával, ÉS rendelj hozzájuk érzelmi adatokat a Russell-féle circumplex modell alapján.
 
@@ -1841,7 +1841,25 @@ Szavak: (...), (...), (...), (...), (...), (...).`
 
         console.log("---- AI PROMPT TO SEND ----");
         console.log(finalPrompt);
-        console.log("---------------------------");
+      console.log("---------------------------");
+
+      poetryTimer = setTimeout(function(){
+        console.log('Poetry is to be generated');
+        //state = 'writing';
+        //$('#emo').attr('src','res/writing.gif');
+        var xhr = $.ajax({
+          type: 'post',
+          url:'https://exxite.hu/faa4/poet/index.php?words='+finalPrompt,
+          success: function(response){
+            console.log(response);
+              //let buf = $('#poetry').html();
+              //$('#poetry').html(response.choices[0].message.content.split('\n').join('<br>')+'<br>------<br>'+buf);
+              //state='show';
+              //$('#emo').attr('src','res/pointing.gif');
+            },
+            error: function(response) {console.error(response);}
+        });
+      },3000);
 
     };
 
