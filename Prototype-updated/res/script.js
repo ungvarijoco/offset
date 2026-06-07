@@ -127,23 +127,38 @@ $(document).ready(function () {
         "vele","rá","pedig","tehát","hát","na","nos","ugye",
         "amúgy","egyébként","igazából","gyakorlatilag","konkrétan",
         "szóval","valójában","persze","igen","jah","ja",
-        "aha","öö","őő","ööö","hm","hmm", "olyan", "milyen",
-        "ezek", "azok", "ebből", "abból", "valami", "semmi", "mind",
-        "ahogy"
+        "aha","öö","őő","ööö","hm","hmm","olyan","milyen",
+        "ezek","azok","ebből","abból","valami","semmi","mind","ahogy",
+        "e","ő","ö","ü","á","é","i","o","u",
+        "én","te","ő","mi","ti","ők","az","ez",
+        "fel","le","be","ki","el","át","rá","ide","oda",
+        "nem","sem","se","se","már","még","bár","sőt",
+        "talán","inkább","mindig","soha","sosem","néha",
+        "épp","pont","éppen","szinte","nagyon","igen","nem"
     ];
 
     const profanities = [
         "fasz", "geci", "kurva", "szar", "basz", "bazd",
-        "picsa", "pina", "pöcs", "köcsög",
-        "rohadék", "segg", "hülye", "szop",
-        "dug", "kúr", "verd", "idióta", "barom", "bunkó", "gyökér",
-        "retard", "nyomorék", "féreg", "szemét",
-        "buzi", "ribanc", "ringyó", "mocsok",
-
-        "fuck", "shit", "bitch", "cunt", "asshole",
+        "picsa", "pina", "pöcs", "köcsög", "lófasz", "kurafi",
+        "rohadék", "rohad", "segg", "szopj", "szopo",
+        "dug", "kúr", "idióta", "barom", "bunkó", "gyökér",
+        "retard", "nyomorék", "féreg", "szemét", "takony", "taknyos",
+        "buzi", "ribanc", "ringyó", "mocsok", "mocskos",
+        "dögölj", "elpusztul", "hülye", "csicska", "büdös", "punci",
+        "fuck", "motherfuck", "shit", "bitch", "cunt", "asshole",
         "dick", "pussy", "slut", "whore", "nigga", "nigger",
-        "faggot", "bastard", "damn", "crap", "hoe"
+        "faggot", "bastard", "crap", "piss", "wank", "bollocks", "hoe"
     ];
+
+    const easterEggs = {
+        "banyek": ");",
+        "bau":    ":o",
+        "baú":    ":o",
+        "balls":  ":3",
+        "ballz":  ":3",
+        "bebúr":  ":+",
+        "bebur":  ":+"
+    };
 
     const cuteWords = [
         "cica", "kiskutya", "nyuszi", "pillangó", "őzike",
@@ -1102,13 +1117,30 @@ $(document).ready(function () {
                     continue;
                 }
 
-                let cleanWord = rawWord.replace(/[.,!?]/g, '').toLowerCase();
+                let cleanWord = rawWord.replace(/[.,!?;:—–]/g, '').toLowerCase();
+                if (cleanWord.length <= 1) {
+                    processedWordCount++;
+                    continue;
+                }
                 let normalizedWord = removeAccents(cleanWord);
-                let isStopWord = stopWords.includes(cleanWord);
+
+                if (easterEggs[cleanWord] !== undefined) {
+                    if (visibleLineCount + newWordsToProcess.length < 6) {
+                        newWordsToProcess.push(easterEggs[cleanWord]);
+                        console.log(`[Easter Egg] "${cleanWord}" → "${easterEggs[cleanWord]}"`);
+                    }
+                    processedWordCount++;
+                    continue;
+                }
+
+                let isStopWord = stopWords.includes(cleanWord) || stopWords.includes(removeAccents(cleanWord));
 
                 let isProfanity = profanities.some(swear => {
                     let normalizedSwear = removeAccents(swear);
-                    return normalizedWord.includes(normalizedSwear);
+                    if (normalizedWord === normalizedSwear) return true;
+                    if (!normalizedWord.startsWith(normalizedSwear)) return false;
+                    const rest = normalizedWord.slice(normalizedSwear.length);
+                    return /^(a|e|at|et|ot|ak|ek|ok|kat|ket|k|t|m|d|n|on|en|nak|nek|ban|ben|ba|be|bol|ra|re|rol|tol|nal|nel|hoz|hez|ig|ert|val|vel|va|ve|ul|nk|unk|uk|om|em|od|ed|ja|je|tok|tek|juk|atok|etek|im|id|ink|ik|itek|tt|ott|ett)$/.test(rest);
                 });
 
                 if (isProfanity) {
