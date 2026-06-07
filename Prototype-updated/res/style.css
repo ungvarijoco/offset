@@ -1,0 +1,663 @@
+@font-face {
+    font-family: 'PP Supply Mono';
+    src: url(../fonts/PPSupplyMono-Regular.ttf) format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'PP Supply Sans';
+    src: url(../fonts/PPSupplySans-Regular.ttf) format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Ny Text';
+    src: url(../fonts/NyText-Black-Italic.ttf) format('truetype');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --black: #101010;
+    --white: #f1f1f1;
+    --speed: 0.7s;
+    --intSpeed: 0.2s;
+    --ease: cubic-bezier(0.7, 0, 0.3, 1);
+    --easeOut: cubic-bezier(0, 0, 0.25, 1);
+    --easeIn: cubic-bezier(0.75, 0, 0, 1);
+    --puzzleEase: cubic-bezier(0.9, 0, 0.1, 1);
+    --globalScale: 0.7;
+    --floating-padding-y: 10px;
+    --floating-padding-x: 30px;
+}
+
+* {
+    box-sizing: border-box;
+    text-decoration: none;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--black);
+    font-family: 'PP Supply Sans', sans-serif;
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.2em;
+    overflow: hidden;
+}
+
+#main-container {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+}
+
+@property --rotation {
+    syntax: '<angle>';
+    inherits: true;
+    initial-value: 0deg;
+}
+
+#fake-ui {
+    position: fixed;
+    height: 100vh;
+    width: 100%;
+    display: none;
+    align-items: end;
+    justify-content: center;
+    gap: 50px;
+    padding-bottom: 50px;
+    z-index: 100;
+}
+
+.button {
+    padding: 15px 30px;
+    background-color: var(--white);
+    color: var(--black);
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--intSpeed) var(--ease);
+}
+
+.button:hover {
+    background-color: var(--black);
+    color: var(--white);
+    border: 1px solid var(--white);
+}
+
+.button-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.ufoplace {
+    position: relative;
+}
+
+.target {
+    position: absolute;
+    inset: 0;
+}
+
+.shape-01 { --base-width: 177px; aspect-ratio: 177/177; }
+.shape-02 { --base-width: 359px; aspect-ratio: 359/177; }
+.shape-03 { --base-width: 177px; aspect-ratio: 177/268; }
+.shape-04 { --base-width: 268px; aspect-ratio: 268/177; }
+.shape-05 { --base-width: 177px; aspect-ratio: 177/177; }
+.shape-06 { --base-width: 268px; aspect-ratio: 268/177; }
+
+.ufo-relative {
+    position: relative;
+    width: calc(var(--base-width) * var(--globalScale));
+}
+
+.ufo-absolute {
+    position: absolute;
+    width: calc(var(--base-width) * 1);
+}
+
+.ufo-faded {
+    opacity: 0.7;
+}
+
+.ufo.physics-mode {
+    transition: opacity var(--speed) var(--ease) var(--delay, 0s);
+}
+
+#hidden-parking {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    padding: 15px 50px;
+    transform: translateY(120%);
+    pointer-events: none;
+}
+
+#spaced-parking {
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 50px;
+    pointer-events: none;
+}
+
+#puzzle-parking {
+    width: 450px;
+    height: 450px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+@keyframes puzzle-spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.ufo-puzzle-tracking {
+    transition: width var(--speed) var(--ease), height var(--speed) var(--ease), opacity var(--speed) var(--ease) !important;
+}
+
+#puzzle-parking.is-spinning {
+    animation: puzzle-spin 2s var(--puzzleEase) infinite;
+}
+
+#puzzle-parking .pos-01 { left: 0; top: 0; }
+#puzzle-parking .pos-02 { right: 0; top: 0; }
+#puzzle-parking .pos-03 { left: 0; bottom: 0; }
+#puzzle-parking .pos-04 { left: calc(20% + 1px); bottom: calc(20% + 1px); }
+#puzzle-parking .pos-05 { right: 0; top: calc(20% + 1px); }
+#puzzle-parking .pos-06 { right: 0; bottom: 0; }
+
+#physics-parking {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 50px;
+    pointer-events: none;
+}
+
+#element-holder {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.ufo {
+    position: absolute;
+    display: flex;
+    justify-content: end;
+    pointer-events: none;
+    translate: var(--recoil-x, 0px) var(--recoil-y, 0px);
+    transition: top var(--speed) var(--ease) var(--delay, 0s),
+                left var(--speed) var(--ease) var(--delay, 0s),
+                width var(--speed) var(--ease) var(--delay, 0s),
+                height var(--speed) var(--ease) var(--delay, 0s),
+                --rotation var(--speed) var(--ease) var(--delay, 0s),
+                opacity var(--speed) var(--ease) var(--delay, 0s),
+                translate var(--recoil-dur, 0.4s) var(--recoil-ease, ease-out);
+}
+
+.ufo.idle-mode {
+    transition: top var(--speed) var(--ease) var(--delay, 0s),
+                left var(--speed) var(--ease) var(--delay, 0s),
+                width var(--speed) var(--ease) var(--delay, 0s),
+                height var(--speed) var(--ease) var(--delay, 0s),
+                --rotation 2.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0s,
+                opacity var(--speed) var(--ease) var(--delay, 0s),
+                translate var(--recoil-dur, 0.4s) var(--recoil-ease, ease-out);
+}
+
+.ufo svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.ufo g {
+    filter: url(#global-inner-light) !important;
+}
+.ufo path.ufo-rotation {
+    fill: var(--black) !important;
+}
+
+.ufo.ufo-active-speech g {
+    filter: url(#global-master-shadow) !important;
+}
+.ufo.ufo-active-speech path.ufo-rotation {
+    fill: var(--white) !important;
+}
+
+.ufo-rotation {
+    transform: rotate(var(--rotation, 0deg));
+    transform-origin: 50% 50%; 
+    transform-box: view-box;
+}
+
+.cube-follow-rotation {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: rotate(var(--rotation, 0deg));
+    transform-origin: center;
+}
+
+.ufo-cube-holder {
+    position: absolute;
+    width: 48%;
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.ufo-cube {
+    width: 8px;
+    aspect-ratio: 1/1;
+    background-color: var(--white);
+}
+
+.ufo-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid var(--white);
+    border-radius: 100%;
+    aspect-ratio: 1/1;
+    width: 0px;
+    transition: 0.4s var(--easeOut);
+}
+
+.ufo-circle-active {
+    width: 30px;
+}
+
+.cube-01 { bottom: 0; left: 0; }
+.cube-02 { bottom: 0; left: 25.3%; width: 24%; }
+.cube-03 { top: 0; right: 0; width: 32%; }
+.cube-04 { top: 34%; left: 0; }
+.cube-05 { bottom: 0; left: 34%; width: 32%; }
+.cube-06 { top: 0; right: 0; }
+
+.speech-line {
+    position: fixed;
+    width: 1px;
+    background-color: var(--white);
+    transform-origin: top center;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/*--Floating-Texts--*/
+
+#floating-text-parking {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.floating-text {
+    width: fit-content;
+    padding: 10px 30px;
+    color: var(--black);
+    font-family: 'PP Supply Mono';
+    font-size: 16px;
+    font-weight: 400;
+    position: absolute;
+    pointer-events: none;
+}
+
+.floating-background {
+    width: 0%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: var(--white);
+    z-index: 3;
+    transition: var(--speed) var(--ease);
+}
+
+.floating-text p {
+    position: relative;
+    z-index: 4;
+    opacity: 0;
+    transition: var(--speed) var(--ease);
+    text-transform: uppercase
+}
+
+.floating-cube {
+    width: 0px;
+    aspect-ratio: 1/1;
+    background-color: var(--white);
+    position: absolute;
+    transition: var(--intSpeed) var(--ease);
+}
+
+.edge-01 { top: 0; left: 0; transform: translate(-50%, -50%); }
+.edge-02 { top: 0; right: 0; transform: translate(50%, -50%); }
+.edge-03 { bottom: 0; left: 0; transform: translate(-50%, 50%); }
+.edge-04 { bottom: 0; right: 0; transform: translate(50%, 50%); }
+
+.floating-background-appear { width: 100%; }
+.floating-text p.floating-text-p-appear { opacity: 1; }
+.emotion-text p.floating-text-p-appear { opacity: 1; }
+.floating-cube-appear { width: 10px; opacity: 1;}
+
+/*--Background--*/
+
+#header {
+    position: fixed;
+    top: 30px;
+    left: 0;
+    width: 100%;
+    padding: 0 50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 99;
+    pointer-events: none;
+}
+
+#logo {
+    padding: 7px;
+    background-color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    border-radius: 3px;
+}
+
+#current-volume {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100%;
+    font-family: "PP Supply Mono";
+    font-size: 16px;
+    color: var(--white);
+}
+
+#noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    mix-blend-mode: screen; 
+    opacity: 0.05; 
+    background-repeat: repeat; 
+    background-size: 512px 512px;
+    animation: noise-animation 0.35s infinite;
+}
+
+@keyframes noise-animation {
+    0%   { background-image: url('../assets/Noise/noise-1.jpg'); }
+    25%  { background-image: url('../assets/Noise/noise-2.jpg'); }
+    50%  { background-image: url('../assets/Noise/noise-3.jpg'); }
+    75%  { background-image: url('../assets/Noise/noise-4.jpg'); }
+    100% { background-image: url('../assets/Noise/noise-1.jpg'); }
+}
+
+.background-fade {
+    opacity: 0.5;
+    width: 100%;
+    height: 150vh;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0;
+    z-index: 1;
+    background-color: var(--black);
+    box-shadow: 0 0 150px 0px var(--white) inset;
+}
+
+/*--Audio Visualizer (Equalizer)-------------------------*/
+
+#eq-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 1s var(--ease);
+}
+
+#eq-container.is-active-eq { opacity: 1; }
+
+.eq-line {
+    fill: none;
+    stroke: var(--white);
+    stroke-width: 1.5px;
+    stroke-dasharray: 6 8;
+    animation: eq-flow 1.5s linear infinite;
+    opacity: 0.6;
+}
+
+.eq-line-1 { opacity: 0.8; stroke-width: 2px; }
+.eq-line-2 { opacity: 0.5; }
+.eq-line-3 { opacity: 0.3; stroke-width: 1px; }
+/*--Poem--*/
+
+#poem-holder {
+    width: 100%;
+    height: 100vh;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 50px;
+    font-size: 48px;
+    font-family: "PP Supply Mono";
+    pointer-events: none;
+    z-index: 99;
+}
+
+#poem-holder p {
+    position: relative;
+    z-index: 4;
+}
+
+#poem {
+    font-kerning: none;
+    line-height: calc(1.3em + var(--floating-padding-y));
+}
+
+#poem .word {
+    height: 100%;
+    vertical-align: middle;
+    transform: translateY(120%);
+    transition: var(--speed) var(--easeIn);
+    opacity: 0;
+    display: inline-block;
+}
+
+#poem .word.word-active {
+    transform: translateY(0);
+    opacity: 1;
+    transition: var(--speed) var(--easeOut);
+}
+
+.floating-match {
+    padding: 0 var(--floating-padding-x); 
+    box-sizing: border-box;
+    font-family: "Ny Text";
+    font-style: italic;
+    font-weight: 800;
+    position: relative;
+    line-height: calc(1.2em + (var(--floating-padding-y) / 2));
+}
+
+.match-text {
+    position: relative;
+    z-index: 4;
+    color: var(--white);
+    transition: color var(--speed) var(--ease);
+}
+
+.floating-match.text-active .match-text {
+    color: var(--black);
+}
+
+.floating-match .floating-background-appear {
+    width: 100%;
+}
+
+.floating-match .floating-cube-appear {
+    width: 10px;
+}
+
+#floating-emotion-holder {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99;
+}
+
+.emotion-text {
+    width: fit-content;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: var(--black);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 25px;
+    font-size: 14px;
+}
+
+.emotion-text p {
+    position: relative;
+    z-index: 4;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: var(--speed) var(--ease);
+}
+
+.emotion-line {
+    position: fixed;
+    width: 1px;
+    background-color: var(--white);
+    transform-origin: top center;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#states-container {
+    width: 100%;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99;
+    padding: 15px 50px;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: end;
+}
+
+.state-visual {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0%;
+    left: 0;
+}
+
+.state-visual-left {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 49%;
+    opacity: 0;
+    transition: 1s var(--ease);
+}
+
+.state-visual-right {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 49%;
+    opacity: 0;
+    transition: 1s var(--ease);
+}
+
+.state-visual-left-active {
+    left: 0%;
+    opacity: 1;
+}
+
+.state-visual-right-active {
+    right: 0%;
+    opacity: 1;
+}
+
+#states-holder {
+    position: relative;
+    width: 100%;
+    height: 50px;
+}
+
+.state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 100%);
+    font-family: "PP Supply Mono";
+    font-size: 18px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: 0.6s var(--ease);
+}
+
+.state-active {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+.state-disable {
+    opacity: 0;
+    transform: translate(-50%, -150%);
+}

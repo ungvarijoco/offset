@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offset</title>
+    <link rel="stylesheet" href="res/style.css">
+</head>
+<body>
+
+<!--Global-Filters-->
+
+<svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+    <defs>
+        <filter id="global-master-shadow" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+            <feOffset dy="-10"/>
+            <feGaussianBlur stdDeviation="5"/>
+            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.75 0"/>
+            <feBlend mode="normal" in2="shape" result="effect1_innerShadow"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha2"/>
+            <feOffset dy="2"/>
+            <feGaussianBlur stdDeviation="2"/>
+            <feComposite in2="hardAlpha2" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/>
+            <feBlend mode="normal" in2="effect1_innerShadow" result="effect2_innerShadow"/>
+        </filter>
+
+        <filter id="global-inner-light" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+            <feOffset dx="0" dy="5"/>
+            <feGaussianBlur stdDeviation="3"/>
+            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 1 0"/>
+            <feBlend mode="normal" in2="shape" result="effect1_innerShadow"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha2"/>
+            <feOffset dx="0" dy="4"/>
+            <feGaussianBlur stdDeviation="5"/>
+            <feComposite in2="hardAlpha2" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 1 0"/>
+            <feBlend mode="normal" in2="effect1_innerShadow" result="effect2_innerShadow"/>
+        </filter>
+    </defs>
+</svg>
+
+<!--Fake-UI-->
+
+<div id="fake-ui">
+    <div class="button button-step01"><p>Hidden Phase</p></div>
+    <div class="button button-step02"><p>Spaced Phase</p></div>
+    <div class="button button-step04"><p>Puzzle Phase</p></div>
+    <div class="button button-step05"><p>Physics Phase</p></div>
+    <div class="button button-step06 button-disabled"><p>Emotion Phase</p></div>
+</div>
+
+<!--State-Explain-->
+
+<div id="states-container">
+    <div id="states-holder">
+        <div class="state-visual">
+            <p class="state-visual-right">]</p>
+            <p class="state-visual-left">[</p>
+        </div>
+        <div class="state spacedPhase stateListening">Most tudod mondani a szavakat</div>
+        <div class="state puzzlePhase stateApiContact">API kommunikáció</div>
+        <div class="state puzzlePhase statePoemGen">Vers Generálás</div>
+        <div class="state puzzlePhase stateEmotions">Érzelmi koordináták generálása</div>
+        <div class="state puzzlePhase statePoemGen">Vers beillesztése</div>
+        <div class="state puzzlePhase statePoemGen">Érzelmek beillesztése</div>
+        <div class="state puzzlePhase statePoemGen">Szöveg tördelés újra kalkulációja</div>
+        <div class="state puzzlePhase statePoemGen">Szöveg megjelenítése</div>
+        <div class="state emotionPhase statePoemGen">Újrakezdés: 15</div>
+    </div>
+</div>
+
+<!--Background-->
+
+<div id="header">
+    <div id="logo">
+        <img src="assets/Offset-Logo.svg" alt="">
+    </div>
+    <div id="current-volume">
+    <p>Zajszint:</p>
+    <p>50</p>
+    </div>
+</div>
+
+<div id="noise-overlay"></div>
+
+<div id="eq-container">
+    <svg id="eq-svg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <path class="eq-line eq-line-1" d=""></path>
+        <path class="eq-line eq-line-2" d=""></path>
+        <path class="eq-line eq-line-3" d=""></path>
+        <path class="eq-line eq-line-4" d=""></path>
+        <path class="eq-line eq-line-4" d=""></path>
+    </svg>
+</div>
+
+<div class="background-fade"></div>
+
+<div id="main-container">
+
+    <!--hidden-parking--->
+
+    <div id="hidden-parking">
+        <div id="h1" class="ufoplace shape-01 ufo-relative"><div class="target"></div></div>
+        <div id="h2" class="ufoplace shape-02 ufo-relative"><div class="target"></div></div>
+        <div id="h3" class="ufoplace shape-03 ufo-relative"><div class="target"></div></div>
+        <div id="h4" class="ufoplace shape-04 ufo-relative"><div class="target"></div></div>
+        <div id="h5" class="ufoplace shape-05 ufo-relative"><div class="target"></div></div>
+        <div id="h6" class="ufoplace shape-06 ufo-relative"><div class="target"></div></div>
+    </div>
+
+    <!--spaced-parking--->
+
+    <div id="spaced-parking">
+        <div id="b1" class="ufoplace shape-01 ufo-relative"><div class="target"></div></div>
+        <div id="b2" class="ufoplace shape-02 ufo-relative"><div class="target"></div></div>
+        <div id="b3" class="ufoplace shape-03 ufo-relative"><div class="target"></div></div>
+        <div id="b4" class="ufoplace shape-04 ufo-relative"><div class="target"></div></div>
+        <div id="b5" class="ufoplace shape-05 ufo-relative"><div class="target"></div></div>
+        <div id="b6" class="ufoplace shape-06 ufo-relative"><div class="target"></div></div>
+    </div>
+
+    <!--puzzle-parking--->
+
+    <div id="puzzle-parking">
+        <div id="c1" class="ufoplace shape-01 ufo-absolute pos-01"><div class="target"></div></div>
+        <div id="c2" class="ufoplace shape-02 ufo-absolute pos-02"><div class="target"></div></div>
+        <div id="c3" class="ufoplace shape-03 ufo-absolute pos-03"><div class="target"></div></div>
+        <div id="c4" class="ufoplace shape-04 ufo-absolute pos-04"><div class="target"></div></div>
+        <div id="c5" class="ufoplace shape-05 ufo-absolute pos-05"><div class="target"></div></div>
+        <div id="c6" class="ufoplace shape-06 ufo-absolute pos-06"><div class="target"></div></div>
+    </div>
+
+    <!--physics-parking--->
+
+    <div id="physics-parking">
+
+    </div>
+
+    <!--element-holder--->
+
+    <div id="element-holder">
+
+        <div class="ufo" data-parent="1" style="--rotation: 0deg; --delay: 0.1s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 177 177" fill="none">
+                <g><path class="ufo-rotation" d="M167 91H96C90.48 91 86 86.52 86 81V10C86 4.48 81.52 0 76 0H10C4.48 0 0 4.48 0 10V167C0 172.52 4.48 177 10 177H167C172.52 177 177 172.52 177 167V101C177 95.48 172.52 91 167 91ZM43 167C24.77 167 10 152.23 10 134C10 115.77 24.77 101 43 101C61.23 101 76 115.77 76 134C76 152.23 61.23 167 43 167Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-01">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube"></div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+        <div class="ufo" data-parent="2" style="--rotation: 0deg; --delay: 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 359 177" fill="none">
+                <g><path class="ufo-rotation" d="M349 0H10C4.48 0 0 4.48 0 10V76C0 81.52 4.48 86 10 86H77C84.73 86 91 92.27 91 100V167C91 172.52 95.48 177 101 177H167C172.52 177 177 172.52 177 167V100C177 92.27 183.27 86 191 86H349C354.52 86 359 81.52 359 76V10C359 4.48 354.52 0 349 0ZM134 167C115.77 167 101 152.23 101 134C101 115.77 115.77 101 134 101C152.23 101 167 115.77 167 134C167 152.23 152.23 167 134 167Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-02">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube"></div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+        <div class="ufo" data-parent="3" style="--rotation: 0deg; --delay: 0.3s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 177 268" fill="none">
+                <g><path class="ufo-rotation" d="M167 91H96C90.48 91 86 86.52 86 81V10C86 4.48 81.52 0 76 0H10C4.48 0 0 4.48 0 10V258C0 263.52 4.48 268 10 268H167C172.52 268 177 263.52 177 258V101C177 95.48 172.52 91 167 91ZM43 167C24.77 167 10 152.23 10 134C10 115.77 24.77 101 43 101C61.23 101 76 115.77 76 134C76 152.23 61.23 167 43 167Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-04">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube"></div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+        <div class="ufo" data-parent="4" style="--rotation: 0deg; --delay: 0.4s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 177" fill="none">
+                <g><path class="ufo-rotation" d="M258 91H187C181.48 91 177 86.52 177 81V10C177 4.48 172.52 0 167 0H10C4.48 0 0 4.48 0 10V76C0 81.52 4.48 86 10 86H81C86.52 86 91 90.48 91 96V167C91 172.52 95.48 177 101 177H258C263.52 177 268 172.52 268 167V101C268 95.48 263.52 91 258 91ZM134 167C115.77 167 101 152.23 101 134C101 115.77 115.77 101 134 101C152.23 101 167 115.77 167 134C167 152.23 152.23 167 134 167Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-05">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube"></div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+        <div class="ufo" data-parent="5" style="--rotation: 0deg; --delay: 0.5s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 177 177" fill="none">
+                <g><path class="ufo-rotation" d="M167 0H10C4.48 0 0 4.48 0 10V167C0 172.52 4.48 177 10 177H167C172.52 177 177 172.52 177 167V10C177 4.48 172.52 0 167 0ZM134 76C115.77 76 101 61.23 101 43C101 24.77 115.77 10 134 10C152.23 10 167 24.77 167 43C167 61.23 152.23 76 134 76Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-06">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube"></div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+        <div class="ufo" data-parent="6" style="--rotation: 0deg; --delay: 0.6s;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 177" fill="none">
+                <g><path class="ufo-rotation" d="M258 0H192C186.48 0 182 4.48 182 10V81C182 86.52 177.52 91 172 91H10C4.48 91 0 95.48 0 101V167C0 172.52 4.48 177 10 177H258C263.52 177 268 172.52 268 167V10C268 4.48 263.52 0 258 0ZM225 76C206.77 76 192 61.23 192 43C192 24.77 206.77 10 225 10C243.23 10 258 24.77 258 43C258 61.23 243.23 76 225 76Z" fill="#F1F1F1"/></g>
+            </svg>
+            <div class="cube-follow-rotation">
+                <div class="ufo-cube-holder cube-03">
+                    <div class="ufo-circle"></div>
+                    <div class="ufo-cube">
+
+                    </div>
+                </div>
+            </div>
+            <div class="speech-line"></div>
+        </div>
+
+    </div>
+
+   <div id="floating-text-parking">
+
+        <div class="floating-text" id="text-box-1">
+            <p>TEXT 1</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+
+        <div class="floating-text" id="text-box-2">
+            <p>TEXT 2</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+
+        <div class="floating-text" id="text-box-3">
+            <p>TEXT 3</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+
+        <div class="floating-text" id="text-box-4">
+            <p>TEXT 4</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+
+        <div class="floating-text" id="text-box-5">
+            <p>TEXT 5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+
+        <div class="floating-text" id="text-box-6">
+            <p>TEXT 6</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        
+    </div>
+
+    <div id="poem-holder">
+        <p id="poem">A város lassan lehúzza a hangját, mintha cipzárt húznának az égre. A fények ide-oda billegnek az utcán, minden ablakban külön történet remeg. Egy lépés, aztán még egy, és a kövek is visszahangozzák a gondolatot. Nem történik semmi látványos — csak az idő dolgozik csendben tovább.</p>
+    </div>
+
+    <div id="floating-emotion-holder">
+        <div class="emotion-text" id="emotion-box-1">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        <div class="emotion-text" id="emotion-box-2">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        <div class="emotion-text" id="emotion-box-3">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        <div class="emotion-text" id="emotion-box-4">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        <div class="emotion-text" id="emotion-box-5">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+        <div class="emotion-text" id="emotion-box-6">
+            <p>Emotion</p>
+            <p>Kellemesség: -0.5</p>
+            <p>Aktivizáció: 0.5</p>
+            <div class="floating-cube edge-01"></div>
+            <div class="floating-cube edge-02"></div>
+            <div class="floating-cube edge-03"></div>
+            <div class="floating-cube edge-04"></div>
+            <div class="floating-background"></div>
+        </div>
+    </div>
+
+</div>
+
+    <script src="https://unpkg.com/split-type"></script>
+    <script src="res/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js" integrity="sha512-6+7rTBmR6pRFe9fa0vCFjFaHZj/XYa7774bEBzRtxgdpIJOS++R3cKd6Prg/eJmxtsJotd8KAg4g57uuVQsZKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="res/script.js"></script>
+</body>
+</html>
