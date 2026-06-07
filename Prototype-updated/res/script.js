@@ -5,7 +5,7 @@ $(document).ready(function () {
     let currentPhase = 'hidden';
 
     const autoConfig = {
-        enabled: false,
+        enabled: true,
         spacedToPuzzle: 3000,
         puzzleToPhysics: 10000,
         physicsToEmotion: 500,
@@ -40,7 +40,7 @@ $(document).ready(function () {
         5:  -30,
         6:  150
     };
-    const SPEECH_MARGIN = 180;
+    const SPEECH_MARGIN = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--globalMargin')) || 100;
 
     const speechConfig = {
         duration: 600,
@@ -86,11 +86,11 @@ $(document).ready(function () {
         baseFlowSpeed: 0.2,
         flowSpeedBoost: 0.01,
         lines: [
-            { sens: 1.2, speed: 0.05,  freq: 2.0, phase: 0 },
-            { sens: 0.8, speed: 0.03,  freq: 1.5, phase: Math.PI / 2 },
-            { sens: 0.5, speed: 0.02,  freq: 2.5, phase: Math.PI },
-            { sens: 0.3, speed: 0.015, freq: 1.8, phase: Math.PI / 4 },
-            { sens: 0.1, speed: 0.01, freq: 1.8, phase: Math.PI / 3 }
+            { sens: 1.2, speed: 0.05,  freq: 2.0, phase: 0,           strokeWidth: 2,   opacity: 1.0 },
+            { sens: 0.8, speed: 0.03,  freq: 1.5, phase: Math.PI / 2, strokeWidth: 1.5, opacity: 0.8 },
+            { sens: 0.5, speed: 0.02,  freq: 2.5, phase: Math.PI,     strokeWidth: 1,   opacity: 0.6 },
+            { sens: 0.3, speed: 0.015, freq: 1.8, phase: Math.PI / 4, strokeWidth: 1.5, opacity: 0.4 },
+            { sens: 0.1, speed: 0.01,  freq: 1.8, phase: Math.PI / 3, strokeWidth: 1.5, opacity: 0.2 }
         ]
     };
 
@@ -162,6 +162,20 @@ $(document).ready(function () {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
 
+    function matchesHungarian(poemWord, recognizedWord) {
+        const cleanPoem = removeAccents(poemWord.toLowerCase());
+        const cleanRoot = removeAccents(recognizedWord.toLowerCase());
+
+        if (cleanPoem === cleanRoot) return true;
+        if (!cleanPoem.startsWith(cleanRoot)) return false;
+
+        const suffix = cleanPoem.slice(cleanRoot.length);
+        if (suffix.length === 0 || suffix.length > 7) return false;
+
+        // Ismert magyar grammatikai toldal\u00e9kok (eset, sz\u00e1m, birtok, igei szem\u00e9lyrag)
+        return /^(a|e|at|et|ot|ot|ak|ek|ok|ok|kat|ket|oket|k|t|m|d|n|on|en|on|nak|nek|ban|ben|ba|be|bol|bol|ra|re|rol|rol|tol|tol|nal|nel|hoz|hez|hoz|ig|ert|val|vel|va|ve|kent|ul|ul|nk|unk|unk|uk|uk|om|em|om|od|ed|od|ja|je|tok|tek|tok|juk|juk|atok|etek|otok|im|id|ink|ik|itek|janak|jatol|jabol|jara|jarol|janal|jaban|jahoz|jaert|javal|tt|ott|ett|ott|unk|unk)$/.test(suffix);
+    }
+
     /*--UFO Plugin---------------------------*/
 
     let physicsActive = false;
@@ -210,30 +224,33 @@ $(document).ready(function () {
     let eqCurrentSens = 0;
     let audioStream = null;
 
-const eqLines = [];
-    eqConfig.lines.forEach((config, index) => {
-        const el = document.querySelector(`.eq-line-${index + 1}`);
+    let eqCanvas = null;
+    let eqCtx = null;
 
-        if (el) {
-            let currentOpacity = 1.0;
-            if (eqConfig.lines.length > 1) {
-                const maxOpacity = 1.0;
-                const minOpacity = 0.2;
-                const opacityStep = (maxOpacity - minOpacity) / (eqConfig.lines.length - 1);
-                currentOpacity = maxOpacity - (index * opacityStep);
-            }
+    const eqPhases = eqConfig.lines.map(l => l.phase);
 
-            el.style.opacity = currentOpacity;
+    function initEqCanvas() {
+        eqCanvas = document.getElementById('eq-canvas');
+        if (!eqCanvas) return;
+        eqCtx = eqCanvas.getContext('2d');
+        eqCanvas.width = window.innerWidth;
+        eqCanvas.height = window.innerHeight;
+    }
 
-            eqLines.push({
-                el: el,
-                sens: config.sens,
-                speed: config.speed,
-                freq: config.freq,
-                phase: config.phase
-            });
+    $(window).on('resize.eq', function() {
+        if (eqCanvas) {
+            eqCanvas.width = window.innerWidth;
+            eqCanvas.height = window.innerHeight;
         }
     });
+
+    initEqCanvas();
+
+    let eqRafId = null;
+    function startEqDraw() {
+        if (!eqRafId) eqRafId = requestAnimationFrame(drawEqualizer);
+    }
+
     async function initAudioEq() {
         if (audioCtx && audioStream && audioStream.active) return;
 
@@ -260,7 +277,7 @@ const eqLines = [];
         }
     }
 
- function drawEqualizer() {
+    function drawEqualizer() {
         let rawVol = 0;
         if (analyser && dataArray) {
             analyser.getByteFrequencyData(dataArray);
@@ -285,39 +302,51 @@ const eqLines = [];
 
         if (eqTargetSens === 0 && eqCurrentSens < 0.01) {
             eqCurrentSens = 0;
-            requestAnimationFrame(drawEqualizer);
+            if (eqCtx) eqCtx.clearRect(0, 0, eqCanvas.width, eqCanvas.height);
+            eqRafId = null;
             return;
         }
 
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        if (!eqCtx) {
+            eqRafId = null;
+            return;
+        }
+
+        const w = eqCanvas.width;
+        const h = eqCanvas.height;
         const midY = h / 2;
 
         const baseAmplitude = (eqConfig.idleAmplitude + (eqCurrentVol * eqConfig.volumeSensitivity)) * eqCurrentSens;
         const currentFlowSpeed = eqConfig.baseFlowSpeed + (eqCurrentVol * eqConfig.flowSpeedBoost);
 
-        eqLines.forEach(line => {
-            if (!line.el) return;
+        eqCtx.clearRect(0, 0, w, h);
 
-            line.phase += line.speed * currentFlowSpeed;
-
-            let d = `M 0 ${midY}`;
+        eqConfig.lines.forEach((line, index) => {
+            eqPhases[index] += line.speed * currentFlowSpeed;
 
             const points = 50;
-            for(let i = 0; i <= points; i++) {
+
+            eqCtx.save();
+            eqCtx.globalAlpha = line.opacity;
+            eqCtx.strokeStyle = '#ffffff';
+            eqCtx.lineWidth = line.strokeWidth;
+            eqCtx.setLineDash([6, 8]);
+            eqCtx.beginPath();
+
+            for (let i = 0; i <= points; i++) {
                 const x = (i / points) * w;
                 const normalizedX = i / points;
                 const edgeTaper = Math.sin(normalizedX * Math.PI);
-                const y = midY + Math.sin(normalizedX * Math.PI * line.freq + line.phase) * baseAmplitude * line.sens * edgeTaper;
-                d += ` L ${x} ${y}`;
+                const y = midY + Math.sin(normalizedX * Math.PI * line.freq + eqPhases[index]) * baseAmplitude * line.sens * edgeTaper;
+                if (i === 0) { eqCtx.moveTo(x, y); } else { eqCtx.lineTo(x, y); }
             }
-            line.el.setAttribute('d', d);
+
+            eqCtx.stroke();
+            eqCtx.restore();
         });
 
-        requestAnimationFrame(drawEqualizer);
+        eqRafId = requestAnimationFrame(drawEqualizer);
     }
-
-    drawEqualizer();
 
 
     /*--Speech Lines-------------------------*/
@@ -333,6 +362,7 @@ const eqLines = [];
     let visibleLineCount = 0;
     const lineData = {};
     let recognizedWords = [];
+    let aiEmotionData = {};
 
     function getCubeCenter(ufoIndex) {
         const cube = $('.ufo[data-parent="' + ufoIndex + '"]').find('.ufo-cube')[0];
@@ -345,13 +375,32 @@ const eqLines = [];
         const now = performance.now();
         let anyActive = false;
 
+        // Batch all DOM reads first to avoid interleaved read/write reflows
+        const centers = {};
+        for (let i = 1; i <= 6; i++) {
+            const data = lineData[i];
+            if (data && data.active) {
+                anyActive = true;
+                centers[i] = getCubeCenter(i);
+            }
+        }
+
         for (let i = 1; i <= 6; i++) {
             const data = lineData[i];
             if (!data || !data.active) continue;
 
-            anyActive = true;
-            const center = getCubeCenter(i);
-            if (!center) continue;
+            const lineEl = $speechLines[i][0];
+            const center = centers[i];
+
+            // Track cube center every frame so the line origin follows recoil and idle rotation
+            if (center) {
+                const dx = data.endX - center.x;
+                const dy = data.endY - center.y;
+                data.angleDeg = (Math.atan2(dy, dx) * 180 / Math.PI) - 90;
+                lineEl.style.top    = center.y + 'px';
+                lineEl.style.left   = center.x + 'px';
+                lineEl.style.height = Math.sqrt(dx * dx + dy * dy) + 'px';
+            }
 
             let t = (now - data.startTime) / speechConfig.duration;
             if (t > 1) t = 1;
@@ -366,24 +415,13 @@ const eqLines = [];
                 eased = easingFunc(t);
             }
 
-            const dx = data.endX - center.x;
-            const dy = data.endY - center.y;
-            const maxLen = Math.sqrt(dx * dx + dy * dy);
-            const currentLen = maxLen * eased;
-
-            const angleDeg = (Math.atan2(dy, dx) * 180 / Math.PI) - 90;
-
-            $speechLines[i].css({
-                top: center.y,
-                left: center.x,
-                height: currentLen,
-                transform: `rotate(${angleDeg}deg)`,
-                opacity: eased > 0.05 ? 1 : 0
-            });
+            lineEl.style.transform = `rotate(${data.angleDeg}deg) scaleY(${eased})`;
+            lineEl.style.opacity = eased > 0.05 ? '1' : '0';
 
             if (data.closing && t >= 1) {
                 data.active = false;
-                $speechLines[i].css({ opacity: 0, height: 0 });
+                lineEl.style.opacity = '0';
+                lineEl.style.transform = `rotate(${data.angleDeg}deg) scaleY(0)`;
             }
         }
 
@@ -419,17 +457,31 @@ const eqLines = [];
 
         const angleRad = speechAngles[i] * Math.PI / 180;
         const dirY = Math.cos(angleRad);
-        const targetY = dirY > 0 ? window.innerHeight - SPEECH_MARGIN : SPEECH_MARGIN;
-        const fullLength = Math.max(0, Math.abs((targetY - center.y) / Math.abs(dirY)));
-
+        const boxH = $(`#text-box-${i}`).outerHeight() || 0;
+        const fixEndY = dirY > 0
+            ? window.innerHeight - SPEECH_MARGIN - boxH
+            : SPEECH_MARGIN + boxH;
+        const fullLength = Math.max(0, Math.abs((fixEndY - center.y) / Math.abs(dirY)));
         const fixEndX = center.x - Math.sin(angleRad) * fullLength;
-        const fixEndY = targetY;
+
+        const ldx = fixEndX - center.x;
+        const ldy = fixEndY - center.y;
+        const lineMaxLen = Math.sqrt(ldx * ldx + ldy * ldy);
+        const lineAngleDeg = (Math.atan2(ldy, ldx) * 180 / Math.PI) - 90;
+
+        const lineEl = $speechLines[i][0];
+        lineEl.style.top = center.y + 'px';
+        lineEl.style.left = center.x + 'px';
+        lineEl.style.height = lineMaxLen + 'px';
+        lineEl.style.transform = `rotate(${lineAngleDeg}deg) scaleY(0)`;
+        lineEl.style.opacity = '1';
 
         lineData[i] = {
             active: true,
             closing: false,
             endX: fixEndX,
             endY: fixEndY,
+            angleDeg: lineAngleDeg,
             startTime: performance.now()
         };
 
@@ -593,12 +645,46 @@ const eqLines = [];
 
     /*--Puzzle Animation---------------------*/
 
-    let lastUfoPos = {};
-    let ufoVelocities = {};
     let puzzleTrackingRaf = null;
     let puzzleLastTrackTime = 0;
     let puzzleSwapTimeout = null;
     let puzzleStartSpinTimeout = null;
+    let puzzleUfoCache = [];
+    let puzzleParkingCenter = { x: 0, y: 0 };
+
+    function buildPuzzleUfoCache() {
+        puzzleUfoCache = [];
+
+        const parkingEl = document.getElementById('puzzle-parking');
+        const parkingRect = parkingEl.getBoundingClientRect();
+        puzzleParkingCenter = {
+            x: parkingRect.left + parkingRect.width  / 2,
+            y: parkingRect.top  + parkingRect.height / 2
+        };
+
+        document.querySelectorAll('.ufo').forEach(function(el) {
+            const index = parseInt(el.getAttribute('data-parent'));
+            const parentEl = document.getElementById('h' + index);
+            if (!parentEl) return;
+            const targetEl = parentEl.querySelector('.target');
+            if (!targetEl) return;
+
+            const targetRect = targetEl.getBoundingClientRect();
+            const tcx = targetRect.left + targetRect.width  / 2;
+            const tcy = targetRect.top  + targetRect.height / 2;
+
+            puzzleUfoCache.push({
+                el,
+                index,
+                w: parentEl.offsetWidth,
+                h: parentEl.offsetHeight,
+                baseLeft: parseFloat(el.style.left) || 0,
+                baseTop:  parseFloat(el.style.top)  || 0,
+                relX: tcx - puzzleParkingCenter.x,
+                relY: tcy - puzzleParkingCenter.y
+            });
+        });
+    }
 
     function getRotation(el) {
         if (!el) return 0;
@@ -612,52 +698,24 @@ const eqLines = [];
     function trackPuzzleMovement(time) {
         if (currentPhase !== 'puzzle') return;
 
-        const delta = time - puzzleLastTrackTime;
         puzzleLastTrackTime = time;
 
-        let puzzleEl = document.getElementById('puzzle-parking');
-        let parentAngle = getRotation(puzzleEl);
+        const parentAngle = getRotation(document.getElementById('puzzle-parking'));
+        const rad = parentAngle * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
 
-        $('.ufo').each(function () {
-            let me = $(this);
-            let index = parseInt(me.attr('data-parent'));
-            let pid = 'h' + index;
-            let $parent = $('#' + pid);
-            if (!$parent.length) return;
+        for (let i = 0; i < puzzleUfoCache.length; i++) {
+            const item = puzzleUfoCache[i];
+            const rotX = item.relX * cos - item.relY * sin;
+            const rotY = item.relX * sin + item.relY * cos;
+            const targetLeft = puzzleParkingCenter.x + rotX - item.w / 2;
+            const targetTop  = puzzleParkingCenter.y + rotY - item.h / 2;
 
-            let target = $parent.find('.target');
-            if (!target.length) return;
-
-            let rect = target[0].getBoundingClientRect();
-            let targetPos = {
-                left: (rect.left + window.scrollX + rect.width / 2) - $parent.width() / 2,
-                top: (rect.top + window.scrollY + rect.height / 2) - $parent.height() / 2
-            };
-
-            if (lastUfoPos[index] && delta > 0) {
-                let vx = ((targetPos.left - lastUfoPos[index].x) / delta) * 16.6;
-                let vy = ((targetPos.top - lastUfoPos[index].y) / delta) * 16.6;
-                ufoVelocities[index] = { x: vx, y: vy };
-            }
-            lastUfoPos[index] = { x: targetPos.left, y: targetPos.top };
-
-            let newLeft = targetPos.left;
-            let newTop = targetPos.top;
-
-            let newRot = parentAngle;
-            ufoCurrentRotation[index] = newRot;
-
-            let nativeEl = document.getElementById(pid);
-            let tr = window.getComputedStyle(nativeEl, null).getPropertyValue('transform');
-
-            me.css({
-                top: newTop,
-                left: newLeft,
-                width: $parent.width(),
-                height: $parent.height(),
-                '--rotation': newRot + 'deg'
-            });
-        });
+            ufoCurrentRotation[item.index] = parentAngle;
+            item.el.style.transform = `translate(${targetLeft - item.baseLeft}px, ${targetTop - item.baseTop}px)`;
+            item.el.style.setProperty('--rotation', parentAngle + 'deg');
+        }
 
         puzzleTrackingRaf = requestAnimationFrame(trackPuzzleMovement);
     }
@@ -683,13 +741,12 @@ const eqLines = [];
     });
 
     function startPuzzlePhase() {
-        lastUfoPos = {};
-        ufoVelocities = {};
-
         puzzleStartSpinTimeout = setTimeout(() => {
             if (currentPhase !== 'puzzle') return;
 
             $('.ufo').addClass('ufo-puzzle-tracking');
+
+            buildPuzzleUfoCache();
 
             $('#puzzle-parking').css('animation-duration', puzzleConfig.rotationSpeed + 'ms');
             $('#puzzle-parking').addClass('is-spinning');
@@ -710,6 +767,7 @@ const eqLines = [];
         clearTimeout(puzzleStartSpinTimeout);
         clearTimeout(puzzleSwapTimeout);
         cancelAnimationFrame(puzzleTrackingRaf);
+        $('.ufo').css('transform', '');
         $('.ufo').removeClass('ufo-active-speech');
         $('.ufo .ufo-circle').removeClass('ufo-circle-active');
     }
@@ -721,12 +779,6 @@ const eqLines = [];
     let spacedPhaseReadyTime = 0;
 
     function updateSpeechButtonState() {
-        if (currentPhase === 'spaced') {
-            $('.button-step03').removeClass('button-disabled');
-        } else {
-            $('.button-step03').addClass('button-disabled');
-        }
-
         if (currentPhase === 'physics') {
             $('.button-step06').removeClass('button-disabled');
         } else {
@@ -744,6 +796,7 @@ const eqLines = [];
 
         if (newPhase === 'hidden' || newPhase === 'spaced') {
             recognizedWords = [];
+            aiEmotionData = {};
             console.log(`Memory cleared (${newPhase} phase).`);
         }
 
@@ -832,6 +885,7 @@ const eqLines = [];
         if (newPhase === 'spaced') {
             $('#eq-container').addClass('is-active-eq');
             eqTargetSens = 1;
+            startEqDraw();
             spacedPhaseReadyTime = Date.now() + 1000;
         } else {
             $('#eq-container').removeClass('is-active-eq');
@@ -874,6 +928,7 @@ const eqLines = [];
         if (currentPhase === newPhase) {
             if (currentPhase === 'spaced' && visibleLineCount > 0) {
                 recognizedWords = [];
+                aiEmotionData = {};
                 processedWordCount = 0;
 
                 console.log("Memory cleared (manual Spaced reset).");
@@ -960,11 +1015,10 @@ const eqLines = [];
                 const pos = item.body.position;
                 const deg = item.body.angle * (180 / Math.PI);
                 ufoCurrentRotation[item.index] = deg;
-                item.dom.css({
-                    left:         pos.x - item.w / 2,
-                    top:          pos.y - item.h / 2,
-                    '--rotation': deg + 'deg'
-                });
+                const s = item.dom[0].style;
+                s.left = (pos.x - item.w / 2) + 'px';
+                s.top  = (pos.y - item.h / 2) + 'px';
+                s.setProperty('--rotation', deg + 'deg');
             });
         });
 
@@ -1125,36 +1179,35 @@ const eqLines = [];
     }
 
     function applyPoemStyles() {
-        let matchedWordsThisRound = [];
-        let matchCount = 0;
+        const matchedIndices = new Set();
 
         $('#poem .word').each(function() {
             let $word = $(this);
             if ($word.children('.floating-background').length > 0) return;
 
             let rawText = $word.text();
-            let cleanText = rawText.replace(/[.,!?]/g, '').toLowerCase();
+            let cleanText = rawText.replace(/[.,!?;:—–]/g, '').toLowerCase();
 
-            let matchedOriginalWord = recognizedWords.find(rw => cleanText === rw.toLowerCase());
+            const matchIndex = recognizedWords.findIndex(function(rw, idx) {
+                return !matchedIndices.has(idx) && matchesHungarian(cleanText, rw);
+            });
 
-            if (matchedOriginalWord && !matchedWordsThisRound.includes(matchedOriginalWord) && matchCount < 6) {
+            if (matchIndex === -1) return;
 
-                matchedWordsThisRound.push(matchedOriginalWord);
-                matchCount++;
+            matchedIndices.add(matchIndex);
 
-                $word.addClass('floating-match');
-                $word.attr('data-match-index', matchCount);
+            $word.addClass('floating-match');
+            $word.attr('data-match-index', matchIndex + 1);
 
-                $word.html(`<span class="match-text">${rawText}</span>`);
+            $word.html(`<span class="match-text">${rawText}</span>`);
 
-                $word.append(`
-                    <div class="floating-cube edge-01"></div>
-                    <div class="floating-cube edge-02"></div>
-                    <div class="floating-cube edge-03"></div>
-                    <div class="floating-cube edge-04"></div>
-                    <div class="floating-background"></div>
-                `);
-            }
+            $word.append(`
+                <div class="floating-cube edge-01"></div>
+                <div class="floating-cube edge-02"></div>
+                <div class="floating-cube edge-03"></div>
+                <div class="floating-cube edge-04"></div>
+                <div class="floating-background"></div>
+            `);
         });
     }
 
@@ -1300,10 +1353,7 @@ const eqLines = [];
 
             anyActive = true;
 
-            if (now < data.startTime) {
-                data.$line.css({ opacity: 0 });
-                continue;
-            }
+            if (now < data.startTime) continue;
 
             let t = (now - data.startTime) / speechConfig.duration;
             if (t > 1) t = 1;
@@ -1312,24 +1362,14 @@ const eqLines = [];
             let eased = data.closing ? 1 - (Easing[speechConfig.easingClose] || Easing.inCubic)(t)
                                      : (Easing[speechConfig.easingOpen] || Easing.outCubic)(t);
 
-            const dx = data.endX - data.startX;
-            const dy = data.endY - data.startY;
-            const maxLen = Math.sqrt(dx * dx + dy * dy);
-            const currentLen = maxLen * eased;
-
-            const angleDeg = (Math.atan2(dy, dx) * 180 / Math.PI) - 90;
-
-            data.$line.css({
-                top: data.startY,
-                left: data.startX,
-                height: currentLen,
-                transform: `rotate(${angleDeg}deg)`,
-                opacity: eased > 0.05 ? 1 : 0
-            });
+            const lineEl = data.$line[0];
+            lineEl.style.transform = `rotate(${data.angleDeg}deg) scaleY(${eased})`;
+            lineEl.style.opacity = eased > 0.05 ? '1' : '0';
 
             if (data.closing && t >= 1) {
                 data.active = false;
-                data.$line.css({ opacity: 0, height: 0 });
+                lineEl.style.opacity = '0';
+                lineEl.style.transform = `rotate(${data.angleDeg}deg) scaleY(0)`;
             }
         }
 
@@ -1364,8 +1404,8 @@ const eqLines = [];
         const RAYS = {
             TL: { edge: '.edge-01', anchor: '-100%, -100%', boxLeft: (x, w)=>x - w, boxTop: (y, h)=>y - h, bgSide: 'right', dirX: -dX, dirY: -dY, pCubes: ['.edge-02', '.edge-04'], sCubes: ['.edge-01', '.edge-03'] },
             TR: { edge: '.edge-02', anchor: '0, -100%',     boxLeft: (x, w)=>x,     boxTop: (y, h)=>y - h, bgSide: 'left',  dirX: dX,  dirY: -dY, pCubes: ['.edge-01', '.edge-03'], sCubes: ['.edge-02', '.edge-04'] },
-            BL: { edge: '.edge-03', anchor: '-100%, 0',     boxLeft: (x, w)=>x - w, boxTop: (y, h)=>y,     bgSide: 'right', dirX: -dX, dirY: dY,  pCubes: ['.edge-02', '.edge-04'], sCubes: ['.edge-01', '.edge-03'] },
-            BR: { edge: '.edge-04', anchor: '0, 0',         boxLeft: (x, w)=>x,     boxTop: (y, h)=>y,     bgSide: 'left',  dirX: dX,  dirY: dY,  pCubes: ['.edge-01', '.edge-03'], sCubes: ['.edge-02', '.edge-04'] }
+            BL: { edge: '.edge-03', anchor: '-100%, 0', boxLeft: (x, w)=>x - w, boxTop: (y, h)=>y, bgSide: 'right', dirX: -dX, dirY: dY,  pCubes: ['.edge-02', '.edge-04'], sCubes: ['.edge-01', '.edge-03'] },
+            BR: { edge: '.edge-04', anchor: '0, 0',     boxLeft: (x, w)=>x,     boxTop: (y, h)=>y, bgSide: 'left',  dirX: dX,  dirY: dY,  pCubes: ['.edge-01', '.edge-03'], sCubes: ['.edge-02', '.edge-04'] }
         };
 
         let delayCounter = 0;
@@ -1429,7 +1469,7 @@ const eqLines = [];
                 let center = getWordCubeCenter($word, ray.edge);
                 if (!center) continue;
 
-                let idealTargetY = (ray.dirY < 0) ? SPEECH_MARGIN : (wH - SPEECH_MARGIN);
+                let idealTargetY = (ray.dirY < 0) ? (SPEECH_MARGIN + boxHeight) : (wH - SPEECH_MARGIN - boxHeight);
                 let idealLenY = (idealTargetY - center.y) / ray.dirY;
 
                 let idealTargetX = (ray.dirX < 0) ? (50 + boxWidth) : (wW - 50 - boxWidth);
@@ -1457,7 +1497,7 @@ const eqLines = [];
                     let center = getWordCubeCenter($word, ray.edge);
                     if (!center) continue;
 
-                    let idealTargetY = (ray.dirY < 0) ? SPEECH_MARGIN : (wH - SPEECH_MARGIN);
+                    let idealTargetY = (ray.dirY < 0) ? (SPEECH_MARGIN + boxHeight) : (wH - SPEECH_MARGIN - boxHeight);
                     let idealLenY = (idealTargetY - center.y) / ray.dirY;
                     let idealTargetX = (ray.dirX < 0) ? (50 + boxWidth) : (wW - 50 - boxWidth);
                     let idealLenX = (idealTargetX - center.x) / ray.dirX;
@@ -1489,7 +1529,7 @@ const eqLines = [];
                 let ray = RAYS[sequence[0]];
                 let center = getWordCubeCenter($word, ray.edge);
 
-                let idealTargetY = (ray.dirY < 0) ? SPEECH_MARGIN : (wH - SPEECH_MARGIN);
+                let idealTargetY = (ray.dirY < 0) ? (SPEECH_MARGIN + boxHeight) : (wH - SPEECH_MARGIN - boxHeight);
                 let idealLenY = (idealTargetY - center.y) / ray.dirY;
                 let idealTargetX = (ray.dirX < 0) ? (50 + boxWidth) : (wW - 50 - boxWidth);
                 let idealLenX = (idealTargetX - center.x) / ray.dirX;
@@ -1507,11 +1547,22 @@ const eqLines = [];
             let $line = $('<div class="emotion-line"></div>');
             $('#emotion-lines-holder').append($line);
 
+            const eDx = finalSpot.endX - finalSpot.center.x;
+            const eDy = finalSpot.endY - finalSpot.center.y;
+            const eMaxLen = Math.sqrt(eDx * eDx + eDy * eDy);
+            const eAngleDeg = (Math.atan2(eDy, eDx) * 180 / Math.PI) - 90;
+
+            const lineEl = $line[0];
+            lineEl.style.top = finalSpot.center.y + 'px';
+            lineEl.style.left = finalSpot.center.x + 'px';
+            lineEl.style.height = eMaxLen + 'px';
+            lineEl.style.transform = `rotate(${eAngleDeg}deg) scaleY(0)`;
+            lineEl.style.opacity = '0';
+
             emotionLineData[index] = {
                 active: true, closing: false,
                 $line: $line,
-                startX: finalSpot.center.x, startY: finalSpot.center.y,
-                endX: finalSpot.endX, endY: finalSpot.endY,
+                angleDeg: eAngleDeg,
                 startTime: performance.now() + delay
             };
 
@@ -1597,7 +1648,7 @@ const eqLines = [];
     });
 
     updateSpeechButtonState();
-
+    /*
     //BUTTON FUNCTIONS COMMENTED OUT FOR AUTOMATION:
     $('.button-step01').on('click', function () { switchPhase('hidden');  });
     $('.button-step02').on('click', function () { switchPhase('spaced');  });
@@ -1605,7 +1656,7 @@ const eqLines = [];
     $('.button-step04').on('click', function () { switchPhase('puzzle');  });
     $('.button-step05').on('click', function () { switchPhase('physics'); });
     $('.button-step06').on('click', function () { switchPhase('emotion'); });
-
+    */
 
     /*--Volume Debug-------------------------*/
 
@@ -1746,13 +1797,15 @@ const eqLines = [];
         // Hook 2: Entered Puzzle phase, waiting for API (Puzzle -> Physics)
         onPuzzleStarted: function() {
             if (autoConfig.enabled) {
-                this.schedule('physics', autoConfig.puzzleToPhysics);
+                const timerPromise = new Promise(resolve => setTimeout(resolve, autoConfig.puzzleToPhysics));
+                const safeApiPromise = apiReadyPromise || Promise.resolve();
+                Promise.all([timerPromise, safeApiPromise]).then(() => {
+                    if (currentPhase === 'puzzle') switchPhase('physics');
+                });
+
                 setTimeout(() => {
                     if (currentPhase === 'puzzle') {
-                        // Subtract the fade-in time from the available time
                         let remainingTime = autoConfig.puzzleToPhysics - puzzleConfig.spinDelay;
-
-                        // Safety check
                         if (remainingTime > 0) {
                             StateManager.startPuzzleProcessing(remainingTime);
                         }
@@ -1806,13 +1859,15 @@ const eqLines = [];
     /*--AI API Setup-------------------------*/
 
     const aiPrompts = {
-        combined: `Írj egy rövid, egyetlen bekezdésből álló, maximum 50-60 szavas költői verset az alábbi 6 szó felhasználásával, ÉS rendelj hozzájuk érzelmi adatokat a Russell-féle circumplex modell alapján.
+        combined: `Írj egy egyetlen bekezdésből álló, LEGALÁBB 50 és LEGFELJEBB 60 szavas költői verset az alábbi 6 szó felhasználásával, ÉS rendelj hozzájuk érzelmi adatokat a Russell-féle circumplex modell alapján.
 
 SZIGORÚ SZABÁLYOK A VERSHEZ:
+A vers szószáma KÖTELEZŐEN 50 és 60 közé kell essen. Mielőtt visszaadod a JSON-t, számold meg a vers szavait — ha kevesebb mint 50, bővítsd ki; ha több mint 60, rövidítsd le.
 A megadott szavakat PONTOSAN az itt megadott formában kell felhasználnod! Tilos ragozni, tilos toldalékot tenni rájuk, és tilos igekötővel kiegészíteni őket. A versnek ezen nyelvi korlátok ellenére is értelmesnek kell lennie.
 
 KIMENETI FORMÁTUM:
 Kizárólag egy érvényes JSON objektumot adj vissza, semmi más szöveget, és ne használj markdown kódblokkot (ne írd ki, hogy \`\`\`json)!
+KRITIKUS JSON SZABÁLY: Minden kulcsot és minden szöveges értéket DUPLA IDÉZŐJELBE kell írni! A számok (kellemesseg, aktivitas) maradhatnak idézőjel nélkül. Például: "erzelem": "boldogság" – TILOS: erzelem: boldogság
 A JSON struktúrája PONTOSAN ez legyen:
 {
 "vers": "Itt szerepeljen a megírt vers szövege egyben...",
@@ -1826,6 +1881,9 @@ Az "erzelmek" objektum kulcsai pontosan a megadott 6 szó letisztított (kisbet�
 
 Szavak: (...), (...), (...), (...), (...), (...).`
     };
+
+    let poetryTimer;
+    let apiReadyPromise = null;
 
     // This function acts as the bridge for the API. It is called from the Speech Recognition logic.
     window.processAIPrompt = function(collectedWordsArray) {
@@ -1841,26 +1899,73 @@ Szavak: (...), (...), (...), (...), (...), (...).`
 
         console.log("---- AI PROMPT TO SEND ----");
         console.log(finalPrompt);
-      console.log("---------------------------");
+        console.log("---------------------------");
 
-      poetryTimer = setTimeout(function(){
-        console.log('Poetry is to be generated');
-        //state = 'writing';
-        //$('#emo').attr('src','res/writing.gif');
-        var xhr = $.ajax({
-          type: 'post',
-          url:'https://exxite.hu/faa4/poet/index.php?words='+finalPrompt,
-          success: function(response){
-            console.log(response);
-              //let buf = $('#poetry').html();
-              $('#poem').text(response.vers);
-               //CALL SPLIT TYPE HERE + STATUS CHANGE
-            //state='show';
-              //$('#emo').attr('src','res/pointing.gif');
-            },
-            error: function(response) {console.error(response);}
-        });
-      },3000);
+        let resolveApiReady;
+        apiReadyPromise = new Promise(resolve => { resolveApiReady = resolve; });
+
+        const networkTimeout = setTimeout(function() {
+            console.warn('API timeout: no response after 60s');
+            StateManager.show($('.stateNetworkError'));
+            setTimeout(function() {
+                resolveApiReady();
+                switchPhase('hidden');
+            }, 5000);
+        }, 60000);
+
+        function callPoetryAPI(attempt) {
+            $.ajax({
+                type: 'POST',
+                url: 'res/AICall.php',
+                data: { words: finalPrompt },
+                dataType: 'json',
+                success: function(response) {
+                    clearTimeout(networkTimeout);
+                    console.log('API response:', response);
+                    if (response && response.vers) {
+                        aiEmotionData = {};
+                        if (response.erzelmek) {
+                            recognizedWords.forEach(function(word, i) {
+                                const key = word.toLowerCase();
+                                const data = response.erzelmek[key];
+                                if (data) {
+                                    aiEmotionData[i + 1] = data;
+                                    const $box = $('#emotion-box-' + (i + 1));
+                                    $box.find('p').eq(0).text(data.erzelem || '');
+                                    $box.find('p').eq(1).text('Kellemesség: ' + (data.kellemesseg !== undefined ? data.kellemesseg : ''));
+                                    $box.find('p').eq(2).text('Aktivizáció: ' + (data.aktivitas !== undefined ? data.aktivitas : ''));
+                                }
+                            });
+                        }
+                        if (poemSplitInstance) poemSplitInstance.revert();
+                        $('#poem').text(response.vers);
+                        poemSplitInstance = new SplitType('#poem', { types: 'words' });
+                    } else {
+                        console.error('Unexpected API response format:', response);
+                    }
+                    resolveApiReady();
+                },
+                error: function(xhr, status, err) {
+                    console.error('API error (attempt ' + attempt + '):', status, err);
+                    if (attempt < 2) {
+                        console.log('Retrying in 3s...');
+                        setTimeout(function() { callPoetryAPI(attempt + 1); }, 3000);
+                    } else {
+                        clearTimeout(networkTimeout);
+                        StateManager.show($('.stateApiError'));
+                        setTimeout(function() {
+                            resolveApiReady();
+                            switchPhase('hidden');
+                        }, 5000);
+                    }
+                }
+            });
+        }
+
+        poetryTimer = setTimeout(function() {
+            console.log('Poetry is to be generated');
+            callPoetryAPI(1);
+        }, 3000);
 
     };
 

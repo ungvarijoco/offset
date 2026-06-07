@@ -32,6 +32,7 @@
     --easeIn: cubic-bezier(0.75, 0, 0, 1);
     --puzzleEase: cubic-bezier(0.9, 0, 0.1, 1);
     --globalScale: 0.7;
+    --globalMargin: 150px;
     --floating-padding-y: 10px;
     --floating-padding-x: 30px;
 }
@@ -69,7 +70,7 @@ body {
     position: fixed;
     height: 100vh;
     width: 100%;
-    display: flex;
+    display: none;
     align-items: end;
     justify-content: center;
     gap: 50px;
@@ -128,9 +129,6 @@ body {
     opacity: 0.7;
 }
 
-.ufo.physics-mode {
-    transition: opacity var(--speed) var(--ease) var(--delay, 0s);
-}
 
 #hidden-parking {
     width: 100%;
@@ -208,6 +206,7 @@ body {
     display: flex;
     justify-content: end;
     pointer-events: none;
+    will-change: transform;
     translate: var(--recoil-x, 0px) var(--recoil-y, 0px);
     transition: top var(--speed) var(--ease) var(--delay, 0s),
                 left var(--speed) var(--ease) var(--delay, 0s),
@@ -310,6 +309,7 @@ body {
     opacity: 0;
     pointer-events: none;
     z-index: 5;
+    will-change: transform, opacity;
 }
 
 /*--Floating-Texts--*/
@@ -376,8 +376,9 @@ body {
 
 #header {
     position: fixed;
-    top: 30px;
+    top: 0;
     left: 0;
+    height: 100px;
     width: 100%;
     padding: 0 50px;
     display: flex;
@@ -416,22 +417,8 @@ body {
     height: 100vh;
     z-index: 9999;
     pointer-events: none;
-    mix-blend-mode: screen;
     opacity: 0.05;
-    background-repeat: repeat;
-    background-size: 512px 512px;
-    animation: noise-animation 0.35s infinite;
 }
-
-
-/*
-@keyframes noise-animation {
-    0%   { background-image: url('../assets/Noise/noise-1.jpg'); }
-    25%  { background-image: url('../assets/Noise/noise-2.jpg'); }
-    50%  { background-image: url('../assets/Noise/noise-3.jpg'); }
-    75%  { background-image: url('../assets/Noise/noise-4.jpg'); }
-    100% { background-image: url('../assets/Noise/noise-1.jpg'); }
-}*/
 
 .background-fade {
     opacity: 0.5;
@@ -462,18 +449,13 @@ body {
 
 #eq-container.is-active-eq { opacity: 1; }
 
-.eq-line {
-    fill: none;
-    stroke: var(--white);
-    stroke-width: 1.5px;
-    stroke-dasharray: 6 8;
-    animation: eq-flow 1.5s linear infinite;
-    opacity: 0.6;
+#eq-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
-
-.eq-line-1 { opacity: 0.8; stroke-width: 2px; }
-.eq-line-2 { opacity: 0.5; }
-.eq-line-3 { opacity: 0.3; stroke-width: 1px; }
 /*--Poem--*/
 
 #poem-holder {
@@ -536,13 +518,6 @@ body {
     color: var(--black);
 }
 
-.floating-match .floating-background-appear {
-    width: 100%;
-}
-
-.floating-match .floating-cube-appear {
-    width: 10px;
-}
 
 #floating-emotion-holder {
     width: 100%;
@@ -584,7 +559,10 @@ body {
     opacity: 0;
     pointer-events: none;
     z-index: 5;
+    will-change: transform, opacity;
 }
+
+/*--States--*/
 
 #states-container {
     width: 100%;
@@ -593,7 +571,7 @@ body {
     top: 0;
     left: 0;
     z-index: 99;
-    padding: 15px 50px;
+    padding: 0 50px;
     pointer-events: none;
     display: flex;
     justify-content: center;
@@ -639,7 +617,7 @@ body {
 #states-holder {
     position: relative;
     width: 100%;
-    height: 50px;
+    height: 100px;
 }
 
 .state {

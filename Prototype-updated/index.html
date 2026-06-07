@@ -12,7 +12,7 @@
 
 <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
     <defs>
-        <filter id="global-master-shadow" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+        <filter id="global-master-shadow" x="-15%" y="-15%" width="130%" height="130%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
             <feFlood flood-opacity="0" result="BackgroundImageFix"/>
             <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
@@ -29,7 +29,7 @@
             <feBlend mode="normal" in2="effect1_innerShadow" result="effect2_innerShadow"/>
         </filter>
 
-        <filter id="global-inner-light" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+        <filter id="global-inner-light" x="-15%" y="-15%" width="130%" height="130%" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
             <feFlood flood-opacity="0" result="BackgroundImageFix"/>
             <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
@@ -66,7 +66,7 @@
             <p class="state-visual-right">]</p>
             <p class="state-visual-left">[</p>
         </div>
-        <div class="state spacedPhase stateListening">Most tudod mondani a szavakat</div>
+        <div class="state spacedPhase stateListening">Diktáld a szavakat</div>
         <div class="state puzzlePhase stateApiContact">API kommunikáció</div>
         <div class="state puzzlePhase statePoemGen">Vers Generálás</div>
         <div class="state puzzlePhase stateEmotions">Érzelmi koordináták generálása</div>
@@ -74,6 +74,8 @@
         <div class="state puzzlePhase statePoemGen">Érzelmek beillesztése</div>
         <div class="state puzzlePhase statePoemGen">Szöveg tördelés újra kalkulációja</div>
         <div class="state puzzlePhase statePoemGen">Szöveg megjelenítése</div>
+        <div class="state stateNetworkError">Elveszett a kapcsolat</div>
+        <div class="state stateApiError">Hibás API kommunikáció</div>
         <div class="state emotionPhase statePoemGen">Újrakezdés: 15</div>
     </div>
 </div>
@@ -90,16 +92,10 @@
     </div>
 </div>
 
-<div id="noise-overlay"></div>
+<canvas id="noise-overlay"></canvas>
 
 <div id="eq-container">
-    <svg id="eq-svg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <path class="eq-line eq-line-1" d=""></path>
-        <path class="eq-line eq-line-2" d=""></path>
-        <path class="eq-line eq-line-3" d=""></path>
-        <path class="eq-line eq-line-4" d=""></path>
-        <path class="eq-line eq-line-4" d=""></path>
-    </svg>
+    <canvas id="eq-canvas"></canvas>
 </div>
 
 <div class="background-fade"></div>
@@ -361,6 +357,7 @@
     <script src="https://unpkg.com/split-type"></script>
     <script src="res/jquery.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js" integrity="sha512-6+7rTBmR6pRFe9fa0vCFjFaHZj/XYa7774bEBzRtxgdpIJOS++R3cKd6Prg/eJmxtsJotd8KAg4g57uuVQsZKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="res/noiseOverlay.js"></script>
     <script src="res/script.js"></script>
 </body>
 </html>
